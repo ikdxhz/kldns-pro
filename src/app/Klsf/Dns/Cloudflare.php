@@ -46,11 +46,13 @@ class Cloudflare implements DnsInterface
         if (!$ret) return [false, $error];
         if (isset($ret['result']['id'])) {
             $record = $ret['result'];
-            return [[
+            $recordData = [
                 'RecordId' => $record['id'],
                 'Name' => $record['name'],
-                'Domain' => $record['zone_name']
-            ], null];
+                'Domain' => $Domain
+            ];
+            // 返回格式与其他DNS接口一致：[[数据], null]
+            return [[$recordData], null];
         }
         return [false, '添加域名记录失败'];
     }
@@ -66,7 +68,7 @@ class Cloudflare implements DnsInterface
                 'Name' => $record['name'],
                 'Type' => $record['type'],
                 'Value' => $record['content'],
-                'Domain' => $record['zone_name']
+                'Domain' => isset($record['zone_name']) ? $record['zone_name'] : $Domain
             ], null];
         }
         return [false, '获取域名记录详情失败'];
@@ -85,7 +87,7 @@ class Cloudflare implements DnsInterface
                     'Name' => $record['name'],
                     'Type' => $record['type'],
                     'Value' => $record['content'],
-                    'Domain' => $record['zone_name']
+                    'Domain' => isset($record['zone_name']) ? $record['zone_name'] : $Domain
                 ];
             }
             return [$list, null];
