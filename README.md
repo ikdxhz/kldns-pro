@@ -61,8 +61,7 @@
 
 ### 问题反馈渠道
 * **GitHub Issues**：在 [GitHub仓库](https://github.com/ikdxhz/kldns-pro/issues) 提交问题
-* **邮件**：发送邮件至 ikdxhz#ikdxhz.top (把#换成@)
-* **QQ交流群**：[383286818](http://shang.qq.com/wpa/qunwpa?idkey=5c50f31eb84481f05bbbeca6a0759a2e9763118f04dce5c6ca2e23652cb2a58b")
+* **邮件**：发送邮件至 ikdxhz#ikdxhz.top (把#换成@)不推荐
 
 ### 常见问题解决方法
 1. **安装问题**：
@@ -77,5 +76,11 @@
 
 3. **升级问题**：
    - 升级前请务必备份数据库和全部文件
-   - 按照版本顺序逐步升级，不要跨版本升级
-   - 升级后清除缓存：`php artisan cache:clear` 和 `php artisan config:clear`
+   - **本系统所有数据都存储在数据库中，升级只需要替换项目文件即可**
+   - 升级步骤：
+     1. 备份数据库
+     2. 备份原项目文件（以防万一）
+     3. 替换所有项目文件（保留 `.env` 文件不变）
+     4. 替换文件（如果你的项目文件没有进行其他更改的话，可以全部替换）
+     5.查看功能是否全部正常，数据是否有问题！！！
+
