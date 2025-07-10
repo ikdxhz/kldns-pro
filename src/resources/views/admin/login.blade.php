@@ -105,20 +105,20 @@
             <div class="card-header">
                 <i class="fa fa-user-shield mr-2"></i>管理员登录
             </div>
-            <div class="card-body">
-                <form id="form-login">
+                <div class="card-body">
+                    <form id="form-login">
                     <div class="form-group">
                         <label for="username">
                             <i class="fa fa-user fa-fw"></i> 用户名
                         </label>
                         <input type="text" name="username" id="username" class="form-control" placeholder="输入管理员账号">
-                    </div>
+                            </div>
                     <div class="form-group">
                         <label for="password">
                             <i class="fa fa-lock fa-fw"></i> 密码
                         </label>
                         <input type="password" name="password" id="password" class="form-control" placeholder="输入管理员密码">
-                    </div>
+                        </div>
                     <div class="form-group">
                         <label for="code">
                             <i class="fa fa-shield-alt fa-fw"></i> 验证码
@@ -132,7 +132,7 @@
                                      onclick="this.src='/captcha?_='+Math.random();">
                             </div>
                         </div>
-                    </div>
+                                </div>
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" name="remember" id="remember">
@@ -143,10 +143,10 @@
                         <button type="button" class="btn btn-primary btn-login btn-block" @click="login">
                             <i class="fa fa-sign-in-alt mr-2"></i>登 录
                         </button>
-                    </div>
-                </form>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
         <div class="login-footer">
             <!-- 1kd+xhz -->
             <p>&copy; {{ date('Y') }} {{ config('app.name') }} - 由<span class="font-weight-bold">��𝓴𝓭𝔁𝓱𝔃</span>团队修改</p>

@@ -39,9 +39,9 @@ window.$post = function (url, params1, params2, func) {
             }
             // 确保layer已定义
             if (typeof layer !== 'undefined') {
-                load = layer.load({
-                    type: 2, shadeClose: false
-                });
+            load = layer.load({
+                type: 2, shadeClose: false
+            });
             } else {
                 console.warn('Layer.js not loaded yet');
             }
@@ -51,14 +51,14 @@ window.$post = function (url, params1, params2, func) {
             if (typeof layer !== 'undefined') {
                 if (load) layer.close(load);
                 
-                if (request.status === 419) {
-                    layer.alert('页面已过期，请刷新页面！', {
-                        closeBtn: 0
-                    }, function (i) {
-                        window.location.reload();
-                    });
-                } else {
-                    layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
+            if (request.status === 419) {
+                layer.alert('页面已过期，请刷新页面！', {
+                    closeBtn: 0
+                }, function (i) {
+                    window.location.reload();
+                });
+            } else {
+                layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
                 }
             } else {
                 console.error('请求错误:', request.status, request.statusText);
@@ -68,7 +68,7 @@ window.$post = function (url, params1, params2, func) {
         success: function (ret) {
             // 确保layer已定义
             if (typeof layer !== 'undefined' && load) {
-                layer.close(load);
+            layer.close(load);
             }
         }
     });
@@ -87,7 +87,7 @@ Vue.prototype.$message = function (message, type) {
         } else if (type === 'warning') {
             layer.msg(message, {icon: 0, time: 2500});
         } else {
-            layer.alert(message);
+    layer.alert(message);
         }
     } else {
         // 回退到原生alert

@@ -124,11 +124,11 @@
                                         <input type="text" name="name" class="form-control" v-model="storeInfo.name" placeholder="例如: www, mail, @">
                                         <div class="input-group-append">
                                             <select class="form-control" name="did" style="flex: none;width: 150px;"
-                                                    v-model="storeInfo.did" :disabled="storeInfo.id">
-                                                <option v-for="(domain,i) in domainList" :value="domain.did">
+                                                v-model="storeInfo.did" :disabled="storeInfo.id">
+                                            <option v-for="(domain,i) in domainList" :value="domain.did">
                                                     .@{{ domain.domain }}
-                                                </option>
-                                            </select>
+                                            </option>
+                                        </select>
                                         </div>
                                     </div>
                                     <div class="input_tips" v-if="desc" v-html="desc"></div>
@@ -273,15 +273,15 @@
                     }, function(index){
                         layer.close(index);
                         vm.$post("/home", {action: 'recordDelete', id: id})
-                            .then(function (data) {
-                                if (data.status === 0) {
-                                    vm.getList();
-                                    vm.$message(data.message, 'success');
-                                } else {
-                                    vm.$message(data.message, 'error');
-                                }
+                        .then(function (data) {
+                            if (data.status === 0) {
+                                vm.getList();
+                                vm.$message(data.message, 'success');
+                            } else {
+                                vm.$message(data.message, 'error');
+                            }
                             });
-                    });
+                        });
                 },
             },
             mounted: function () {

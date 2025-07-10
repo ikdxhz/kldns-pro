@@ -59,11 +59,11 @@
                         <span class="badge badge-primary mr-2">2</span>
                         点击左侧菜单栏的<a href="/admin/domain/list" class="font-weight-bold">域名列表</a>，然后点击“添加”按钮。
                     </div>
-                    <div class="list-group-item">
+                <div class="list-group-item">
                         <span class="badge badge-primary mr-2">3</span>
                         在添加页面，选择您刚配置好的解析平台，点击“获取”按钮，系统会自动拉取您在该平台下的所有域名。
-                    </div>
-                     <div class="list-group-item">
+                </div>
+                <div class="list-group-item">
                         <span class="badge badge-primary mr-2">4</span>
                         选择您想提供给用户使用的域名，设置好用户添加记录所需的积分等信息，然后保存即可。
                         <small class="form-text text-muted mt-1">

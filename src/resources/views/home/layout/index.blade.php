@@ -92,18 +92,18 @@
     // by ¡kdxhž
     var showMenu = false;
     $(document).ready(function() {
-        $("#menu").click(function () {
-            if (showMenu) {
-                $(".bd-sidebar").removeClass('openMenu');
-                $(".bd-content").removeClass('moveRight');
-                $(".bd-content").addClass('moveAnimation');
-                showMenu = false;
-            } else {
-                $(".bd-content").removeClass('moveAnimation');
-                $(".bd-sidebar").addClass('openMenu');
-                $(".bd-content").addClass('moveRight');
-                showMenu = true;
-            }
+    $("#menu").click(function () {
+        if (showMenu) {
+            $(".bd-sidebar").removeClass('openMenu');
+            $(".bd-content").removeClass('moveRight');
+            $(".bd-content").addClass('moveAnimation');
+            showMenu = false;
+        } else {
+            $(".bd-content").removeClass('moveAnimation');
+            $(".bd-sidebar").addClass('openMenu');
+            $(".bd-content").addClass('moveRight');
+            showMenu = true;
+        }
         });
         
         // 高亮当前活动菜单

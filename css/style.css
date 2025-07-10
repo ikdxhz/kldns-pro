@@ -146,6 +146,20 @@ body {
     background: white;
 }
 
+/* 确保彩色背景卡片中的文字颜色为白色并增加阴影 */
+.card.bg-primary, .card.bg-success, .card.bg-warning, .card.bg-danger, .card.bg-info {
+    color: white !important;
+}
+
+.card.bg-primary .card-text, .card.bg-success .card-text, 
+.card.bg-warning .card-text, .card.bg-danger .card-text, 
+.card.bg-info .card-text, .card.bg-primary .card-title, 
+.card.bg-success .card-title, .card.bg-warning .card-title, 
+.card.bg-danger .card-title, .card.bg-info .card-title {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
 .btn {
     border-radius: 4px;
     font-weight: 500;
