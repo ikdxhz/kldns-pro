@@ -10,7 +10,6 @@ namespace App\Http\Middleware;
 
 
 use App\Http\Controllers\InstallController;
-use App\Models\Config;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,10 +70,31 @@ class LoadSysConfig
             $correctTable = $prefix . 'configs';
             $wrongTable = $prefix . $prefix . 'configs';
             
-            // 检查是否存在错误表名
-            if (Schema::hasTable($wrongTable) && !Schema::hasTable($correctTable)) {
-                DB::statement("RENAME TABLE `{$wrongTable}` TO `{$correctTable}`");
-                Log::info("Fixed table name: renamed {$wrongTable} to {$correctTable}");
+            // 使用原生SQL检查表是否存在，避免Schema前缀问题
+            $tables = DB::select("SHOW TABLES");
+            $tablesArray = array_map(function($table) {
+                return array_values((array)$table)[0]; 
+            }, $tables);
+            
+            // 如果错误表名存在
+            if (in_array($wrongTable, $tablesArray)) {
+                // 如果正确表名也存在，删除错误表
+                if (in_array($correctTable, $tablesArray)) {
+                    // 尝试先合并数据
+                    try {
+                        DB::statement("INSERT IGNORE INTO `{$correctTable}` SELECT * FROM `{$wrongTable}`");
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to merge data: " . $e->getMessage());
+                    }
+                    
+                    DB::statement("DROP TABLE `{$wrongTable}`");
+                    Log::info("Dropped duplicate table: {$wrongTable}");
+                } 
+                // 如果正确表名不存在，重命名错误表为正确表名
+                else {
+                    DB::statement("RENAME TABLE `{$wrongTable}` TO `{$correctTable}`");
+                    Log::info("Renamed table from {$wrongTable} to {$correctTable}");
+                }
             }
         } catch (\Exception $e) {
             Log::error('Failed to check/fix table prefix: ' . $e->getMessage());
@@ -84,12 +104,14 @@ class LoadSysConfig
     /**
      * 加载系统配置
      * @param $request
-     * @return mixed
      */
     private function loadSysConfig($request)
     {
         try {
-            $configs = Config::all();
+            // 直接使用DB查询，避免模型带来的表前缀问题
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            $configs = DB::table($prefix . 'configs')->get();
+            
             $_configs = [];
             foreach ($configs as $config) {
                 if (substr($config->k, 0, 6) === 'array_') {
