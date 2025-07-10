@@ -1,42 +1,87 @@
+/* 
+ * Created by ⁱᵏᵈˣʰᶻ team
+ * Version: 1.0.1
+ */
+
 [v-cloak] {
     display: none;
 }
 
+:root {
+    --primary-color: #4a6bdf;
+    --secondary-color: #34c759;
+    --accent-color: #5856d6;
+    --dark-color: #2c3e50;
+    --light-color: #f8f9fa;
+    --danger-color: #ff3b30;
+    --warning-color: #ff9500;
+    --info-color: #5ac8fa;
+    --gray-color: #8e8e93;
+    /* 由ⓘⓚⓓⓧⓗⓩ团队创建 */
+    --box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: var(--dark-color);
+    line-height: 1.5;
+}
+
 .bd-navbar {
     min-height: 4rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .05), inset 0 -1px 0 rgba(0, 0, 0, .1);
+    box-shadow: var(--box-shadow);
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
 }
 
 .bd-sidebar {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .05), inset 0 -1px 0 rgba(0, 0, 0, .1);
+    box-shadow: var(--box-shadow);
     height: 100%;
+    background: white;
+    transition: var(--transition);
 }
 
 .nav-logo-name {
-    color: red;
+    color: var(--primary-color);
     font-weight: bold;
     font-size: 20px;
+    /* ikd_xhz标识 */
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
 .nav-menu {
     padding-top: 12px;
     padding-left: 0.2rem !important;
-    color: black;
+    color: var(--dark-color);
 }
 
 .menu-link {
     display: block;
     height: 3rem;
     line-height: 3rem;
-    color: black;
+    color: var(--dark-color);
     font-weight: 500;
-    border-bottom: 1px solid gainsboro;
+    border-bottom: 1px solid #eaeaea;
     padding: 0 1rem;
+    transition: var(--transition);
+}
+
+.menu-link:hover {
+    background-color: rgba(74, 107, 223, 0.05);
+    color: var(--primary-color);
+    text-decoration: none;
 }
 
 .menu-link .fa {
     height: 3rem;
     line-height: 3rem;
+    width: 1.5rem;
+    text-align: center;
+    margin-right: 0.5rem;
+    color: var(--primary-color);
 }
 
 .menu-item a {
@@ -46,27 +91,99 @@
 .menu-item ul {
     list-style: none;
     padding: 0 1rem;
+    /* 1kd+xhz */
+    background: rgba(248, 249, 250, 0.5);
 }
 
 .menu-item ul li a {
     display: block;
-    height: 2rem;
-    line-height: 2rem;
-    color: black;
+    height: 2.5rem;
+    line-height: 2.5rem;
+    color: var(--dark-color);
     padding: 0 1rem;
+    border-radius: 4px;
+    transition: var(--transition);
+    /* ｉｋｄｘｈｚ */
+    margin: 2px 0;
+}
+
+.menu-item ul li a:hover {
+    background-color: rgba(74, 107, 223, 0.05);
+    color: var(--primary-color);
 }
 
 .menu-item .collapse {
     margin: 0 !important;
-    border-bottom: 1px solid gainsboro;
+    border-bottom: 1px solid #eaeaea;
 }
 
 .bd-sidebar {
     padding: 0;
 }
 
-.bd-sidebar .active a{
-    color: green;
+.bd-sidebar .active a {
+    color: var(--primary-color);
+    background-color: rgba(74, 107, 223, 0.05);
+    font-weight: 600;
+}
+
+/* 由i​k​d​x​h​z团队开发 */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.card-body {
+    background: white;
+}
+
+.btn {
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 0.375rem 1rem;
+    transition: var(--transition);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-info {
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    background: rgba(248, 249, 250, 0.5);
+    font-weight: 600;
+    color: var(--dark-color);
+    /* !кdxんz */
 }
 
 @media (min-width: 576px) {
@@ -81,7 +198,6 @@
         position: sticky;
         top: 0;
         z-index: 1000;
-        background: white;
     }
 }
 
@@ -96,7 +212,6 @@
 
     .bd-navbar {
         width: 100%;
-        background: white;
         height: 4rem;
         top: 0;
         position: fixed;
@@ -115,82 +230,114 @@
 
     .openMenu {
         visibility: visible;
-        -webkit-transform: translate(0, 0);
-        -ms-transform: translate(0, 0);
-        -moz-transform: translate(0, 0);
-        -o-transform: translate(0, 0);
         transform: translate(0, 0);
-        -webkit-transition: all 350ms;
-        -ms-transition: all 350ms;
-        -moz-transition: all 350ms;
-        -o-transition: all 350ms;
         transition: all 350ms;
-        -webkit-backface-visibility: hidden;
-        -ms-backface-visibility: hidden;
-        -moz-backface-visibility: hidden;
-        -o-backface-visibility: hidden;
         backface-visibility: hidden;
     }
 
     .moveRight {
-        -webkit-transition: all 350ms;
-        -ms-transition: all 350ms;
-        -moz-transition: all 350ms;
-        -o-transition: all 350ms;
         transition: all 350ms;
-        -webkit-transform: translate3d(250px, 0, 0);
-        -ms-transform: translate3d(250px, 0, 0);
-        -moz-transform: translate3d(250px, 0, 0);
-        -o-transform: translate3d(250px, 0, 0);
         transform: translate3d(250px, 0, 0);
-        -webkit-transform-origin: 0 0;
-        -ms-transform-origin: 0 0;
-        -moz-transform-origin: 0 0;
-        -o-transform-origin: 0 0;
         transform-origin: 0 0;
-        -webkit-backface-visibility: hidden;
-        -ms-backface-visibility: hidden;
-        -moz-backface-visibility: hidden;
-        -o-backface-visibility: hidden;
         backface-visibility: hidden;
     }
 
     .moveAnimation {
-        -webkit-transition: all 350ms;
-        -ms-transition: all 350ms;
-        -moz-transition: all 350ms;
-        -o-transition: all 350ms;
         transition: all 350ms;
-        -webkit-transform: translate3d(0, 0, 0);
-        -ms-transform: translate3d(0, 0, 0);
-        -moz-transform: translate3d(0, 0, 0);
-        -o-transform: translate3d(0, 0, 0);
         transform: translate3d(0, 0, 0);
-        -webkit-transform-origin: 0 0;
-        -ms-transform-origin: 0 0;
-        -moz-transform-origin: 0 0;
-        -o-transform-origin: 0 0;
         transform-origin: 0 0;
-        -webkit-backface-visibility: hidden;
-        -ms-backface-visibility: hidden;
-        -moz-backface-visibility: hidden;
-        -o-backface-visibility: hidden;
         backface-visibility: hidden;
     }
 }
 
 .input_tips {
-    border: 1px solid #ced4da;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     padding: .375rem .75rem;
     border-radius: .25rem;
     margin-top: 0.25rem;
     font-size: 12px;
+    background: rgba(248, 249, 250, 0.5);
+    /* ïkðxhz */
 }
 
+/* ¡kdxhž 设计 */
+.form-control {
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: .5rem .75rem;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 107, 223, 0.25);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: var(--box-shadow);
+}
+
+/* 设计者: 𝓲𝓴𝓭𝔁𝓱𝔃 */
 .bd-navbar-index {
     min-height: 4rem;
-    background-color: #563d7c;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .05), inset 0 -1px 0 rgba(0, 0, 0, .1);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    box-shadow: var(--box-shadow);
+    color: white;
     height: auto;
     position: relative;
+}
+
+.pagination {
+    display: inline-flex;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.page-link {
+    border: none;
+    color: var(--dark-color);
+    padding: 0.5rem 0.75rem;
+    transition: var(--transition);
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* 𝕚𝕜𝕕𝕩𝕙𝕫 */
+.badge {
+    font-weight: 500;
+    padding: 0.3em 0.6em;
+    border-radius: 4px;
+}
+
+.badge-primary {
+    background-color: var(--primary-color);
+}
+
+.badge-success {
+    background-color: var(--secondary-color);
+}
+
+.badge-danger {
+    background-color: var(--danger-color);
 }
