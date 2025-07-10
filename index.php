@@ -21,7 +21,6 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
-    __DIR__ . '/src/vendor/autoload.php', // 项目原始结构
 require __DIR__ . '/src/vendor/autoload.php';
 
 /*
