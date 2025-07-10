@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- 
-  Created by: ⁱᵏᵈˣʰᶻ
-  Version: 1.0.1
+  Modified by: ⁱᵏᵈˣʰᶻ
+  Version: 1.0.2
 -->
 <html lang="zh-CN">
 <head>
@@ -149,7 +149,7 @@
         </div>
         <div class="login-footer">
             <!-- 1kd+xhz -->
-            <p>&copy; {{ date('Y') }} {{ config('app.name') }} - 由<span class="font-weight-bold">𝓲𝓴𝓭𝔁𝓱𝔃</span>团队开发</p>
+            <p>&copy; {{ date('Y') }} {{ config('app.name') }} - 由<span class="font-weight-bold">��𝓴𝓭𝔁𝓱𝔃</span>团队修改</p>
         </div>
     </div>
 </div>

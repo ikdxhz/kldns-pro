@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- 
-  Created by: ⁱᵏᵈˣʰᶻ
-  Version: 1.0.1
+  Modified by: ⁱᵏᵈˣʰᶻ
+  Version: 1.0.2
 -->
 <html lang="zh-CN">
 <head>
@@ -136,7 +136,7 @@
             <div class="p-3 d-none d-md-block">
                 <div class="text-center small text-muted mt-4">
                     <p>© {{ date('Y') }} {{ config('app.name') }}</p>
-                    <p class="mb-0">由<span class="font-weight-bold">1kdxhz</span>团队开发</p>
+                    <p class="mb-0">由<span class="font-weight-bold">1kdxhz</span>团队修改</p>
                 </div>
             </div>
         </div>

@@ -1,14 +1,14 @@
 /**
  * KLDNS-Pro JavaScript Library
- * Created by ⓘⓚⓓⓧⓗⓩ team
- * Version: 1.0.1
+ * Modified by ⓘⓚⓓⓧⓗⓩ team
+ * Version: 1.0.2
  */
 
 window.$_GET = function (name) {
     return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.href) || [, ""])[1].replace(/\+/g, '%20')) || '';
 };
 
-// 由 ｉｋｄｘｈｚ 设计的 AJAX 工具
+// 由 ｉｋｄｘｈｚ 修改的 AJAX 工具
 window.$post = function (url, params1, params2, func) {
     var str = '';
     if (typeof (params1) === 'object') {

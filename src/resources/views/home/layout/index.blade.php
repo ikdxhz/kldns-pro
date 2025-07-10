@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- 
-  Created by: ⁱᵏᵈˣʰᶻ
-  Version: 1.0.1
+  Modified by: ⁱᵏᵈˣʰᶻ
+  Version: 1.0.2
 -->
 <html lang="zh-CN">
 <head>
@@ -15,7 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
-    <!-- 𝓲𝓴𝓭𝔁𝓱𝔃 design system -->
+    <!-- 𝓲𝓴𝓭𝔁𝓱𝔃 modified -->
     @yield('head')
 </head>
 <body>
@@ -74,7 +74,7 @@
             <div class="p-3 d-none d-md-block">
                 <div class="text-center small text-muted mt-4">
                     <p>© {{ date('Y') }} {{ config('sys.web.name') }}</p>
-                    <p class="mb-0">由<span class="font-weight-bold">𝕚𝕜𝕕𝕩𝕙𝕫</span>团队开发</p>
+                    <p class="mb-0">由<span class="font-weight-bold">��𝕜𝕕𝕩𝕙𝕫</span>团队修改</p>
                 </div>
             </div>
         </div>
