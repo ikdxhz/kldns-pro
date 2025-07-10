@@ -11,11 +11,24 @@
 <body>
 <div id="vue">
     <div class="col-12 col-md-4 offset-md-4 mt-3 mt-sm-5">
-        @if(config('mysql'))
+        <!-- 已安装提示：检查mysql.php配置文件和数据库连接 -->
+        @if(file_exists(base_path('src/config/mysql.php')))
             <div class="card mb-3">
                 <div class="card-header text-white bg-info ">安装提示</div>
-                <div class="card-body text-center text-danger">
-                    对不起，你已完成安装！如需重新安装，请删除 根目录/src/config/mysql.php 文件
+                <div class="card-body text-center">
+                    <p class="text-danger">对不起，你已完成安装！如需重新安装，请删除以下文件：</p>
+                    <p class="text-danger font-weight-bold">根目录/src/config/mysql.php</p>
+                    <hr>
+                    <p>如果您确认需要重新安装，请按照以下步骤操作：</p>
+                    <ol class="text-left">
+                        <li>备份您的数据（如有需要）</li>
+                        <li>删除 src/config/mysql.php 文件</li>
+                        <li>刷新本页面开始安装</li>
+                    </ol>
+                    <div class="mt-3">
+                        <a href="/" class="btn btn-primary">返回首页</a>
+                        <a href="/admin" class="btn btn-info">进入后台</a>
+                    </div>
                 </div>
             </div>
         @else

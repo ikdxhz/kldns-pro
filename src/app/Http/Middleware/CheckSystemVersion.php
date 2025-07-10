@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Config;
 use Closure;
+use Illuminate\Support\Facades\Log;
 
 class CheckSystemVersion
 {
@@ -16,48 +17,130 @@ class CheckSystemVersion
      */
     public function handle($request, Closure $next)
     {
-        // 安装检查：如果系统未安装，允许访问安装页面
-        if (!file_exists(config_path('mysql.php')) && $request->path() == 'install') {
+        // 如果正在访问安装页面，直接通过
+        if ($request->path() == 'install') {
+            // 如果系统已安装并且配置有效，显示已安装提示
+            if ($this->isSystemInstalled()) {
+                return response('对不起，你已完成安装！如需重新安装，请删除 根目录/src/config/mysql.php 文件', 200);
+            }
             return $next($request);
         }
 
-        // 如果系统已安装，检查版本并更新
+        // 检查系统是否已安装
+        if (!$this->isSystemInstalled()) {
+            return redirect('/install');
+        }
+
+        // 系统已安装，尝试检查版本并更新
         try {
-            if (file_exists(config_path('mysql.php'))) {
-                // 尝试连接数据库
-                try {
-                    \DB::connection()->getPdo();
-                    
-                    // 检查表是否存在
-                    if (!\Schema::hasTable('configs')) {
-                        // 如果configs表不存在，可能是旧版本，尝试根据旧表前缀查询
-                        $prefix = config('database.connections.mysql.prefix', 'kldns_');
-                        if (\Schema::hasTable($prefix . 'configs')) {
-                            // 设置正确的表名
-                            \DB::statement("ALTER TABLE {$prefix}configs RENAME TO configs");
-                        }
-                    }
-                    
-                    // 执行版本检查和更新
-                    Config::checkAndUpdateVersion();
-                    
-                } catch (\Exception $e) {
-                    \Log::error('Database connection failed: ' . $e->getMessage());
-                    // 数据库连接失败，重定向到安装页面
-                    if ($request->path() != 'install') {
-                        return redirect('/install');
-                    }
-                }
-            } else {
-                // 系统未安装，重定向到安装页面
-                if ($request->path() != 'install') {
-                    return redirect('/install');
-                }
+            // 尝试连接数据库
+            if (\DB::connection()->getPdo()) {
+                // 检查configs表是否存在
+                $this->checkAndFixConfigsTable();
+                
+                // 执行版本检查和更新
+                Config::checkAndUpdateVersion();
             }
         } catch (\Exception $e) {
-            \Log::error('System version check failed: ' . $e->getMessage());
+            Log::error('System version check failed: ' . $e->getMessage());
         }
 
         return $next($request);
+    }
+
+    /**
+     * 检查系统是否已安装
+     * 
+     * @return bool
+     */
+    private function isSystemInstalled()
+    {
+        // 检查mysql.php配置文件是否存在且有效
+        if (!file_exists(config_path('mysql.php'))) {
+            return false;
+        }
+
+        // 加载mysql配置
+        $mysqlConfig = include config_path('mysql.php');
+        if (!is_array($mysqlConfig) || 
+            empty($mysqlConfig['host']) || 
+            empty($mysqlConfig['database']) || 
+            empty($mysqlConfig['username'])) {
+            return false;
+        }
+        
+        // 检查.env文件中的数据库配置
+        $dbDatabase = env('DB_DATABASE');
+        $dbUsername = env('DB_USERNAME');
+        
+        // 如果.env文件有数据库配置，说明系统已安装
+        if (!empty($dbDatabase) && !empty($dbUsername)) {
+            return true;
+        }
+        
+        // 否则使用mysql.php配置文件进行检查
+        try {
+            // 使用配置尝试连接数据库
+            $dsn = "mysql:host={$mysqlConfig['host']};dbname={$mysqlConfig['database']};port={$mysqlConfig['port']}";
+            $pdo = new \PDO($dsn, $mysqlConfig['username'], $mysqlConfig['password']);
+            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            
+            // 验证数据库表是否存在
+            $prefix = $mysqlConfig['prefix'];
+            $result = $pdo->query("SHOW TABLES LIKE '{$prefix}configs'");
+            
+            return $result->rowCount() > 0;
+        } catch (\Exception $e) {
+            Log::error('Database connection check failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 检查并修复configs表
+     */
+    private function checkAndFixConfigsTable()
+    {
+        try {
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            
+            // 检查各种可能的表名情况
+            $possibleTables = [
+                'configs',                // 无前缀
+                $prefix . 'configs',      // 正确前缀
+                $prefix . $prefix . 'configs' // 重复前缀
+            ];
+            
+            $existingTables = [];
+            foreach ($possibleTables as $table) {
+                if (\Schema::hasTable($table)) {
+                    $existingTables[] = $table;
+                }
+            }
+            
+            // 处理表名问题
+            if (count($existingTables) > 0) {
+                // 选择正确的表名作为主表
+                $mainTable = $prefix . 'configs';
+                
+                // 如果正确表名不存在但其他表名存在
+                if (!in_array($mainTable, $existingTables)) {
+                    $sourceTable = $existingTables[0]; // 使用第一个存在的表
+                    \DB::statement("RENAME TABLE `{$sourceTable}` TO `{$mainTable}`");
+                    Log::info("Renamed table from {$sourceTable} to {$mainTable}");
+                }
+                // 如果有多个表存在，保留正确的表，删除其他表
+                else if (count($existingTables) > 1) {
+                    foreach ($existingTables as $table) {
+                        if ($table != $mainTable) {
+                            \DB::statement("DROP TABLE IF EXISTS `{$table}`");
+                            Log::info("Dropped duplicate table: {$table}");
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Fix configs table failed: ' . $e->getMessage());
+        }
     }
 } 
