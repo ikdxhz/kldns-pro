@@ -10,6 +10,8 @@ namespace App\Http\Controllers\Admin;
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Domain;
+use App\Models\DomainRecord;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +26,26 @@ class AdminController extends Controller
         switch ($action) {
             case 'profile':
                 return $this->profile($request);
+            case 'stats':
+                return $this->stats();
             default:
                 return ['status' => -1, 'message' => '对不起，此操作不存在！'];
+        }
+    }
+
+    private function stats()
+    {
+        // 增加try-catch以防止数据库错误
+        try {
+            $stats = [
+                'users' => User::count(),
+                'domains' => Domain::count(),
+                'records' => DomainRecord::count(),
+                'today_users' => User::today()->count(),
+            ];
+            return ['status' => 0, 'data' => $stats];
+        } catch (\Exception $e) {
+            return ['status' => -1, 'message' => '获取统计信息失败: ' . $e->getMessage()];
         }
     }
 
