@@ -181,44 +181,72 @@ class CheckSystemVersion
      * 检查并修复configs表
      * 
      * @developer 1kdxhz
+     * @version   3.1.3
      */
     private function checkAndFixConfigsTable()
     {
         try {
             $prefix = config('database.connections.mysql.prefix', 'kldns_');
             
-            // 检查各种可能的表名情况
-            $possibleTables = [
-                'configs',                // 无前缀
-                $prefix . 'configs',      // 正确前缀
-                $prefix . $prefix . 'configs' // 重复前缀
-            ];
-            
-            $existingTables = [];
-            foreach ($possibleTables as $table) {
-                if (\Schema::hasTable($table)) {
-                    $existingTables[] = $table;
-                }
+            // 获取所有表
+            $tables = DB::select("SHOW TABLES");
+            $allTables = [];
+            foreach ($tables as $table) {
+                $allTables[] = array_values((array)$table)[0];
             }
             
-            // 处理表名问题
-            if (count($existingTables) > 0) {
-                // 选择正确的表名作为主表
-                $mainTable = $prefix . 'configs';
-                
-                // 如果正确表名不存在但其他表名存在
-                if (!in_array($mainTable, $existingTables)) {
-                    $sourceTable = $existingTables[0]; // 使用第一个存在的表
-                    DB::statement("RENAME TABLE `{$sourceTable}` TO `{$mainTable}`");
-                    Log::info("Renamed table from {$sourceTable} to {$mainTable}");
+            // 检查各种可能的表名情况
+            $correctTable = $prefix . 'configs';
+            $wrongTables = [
+                'configs',                     // 无前缀
+                $prefix . $prefix . 'configs'  // 重复前缀
+            ];
+            
+            // 如果正确表名不存在
+            if (!in_array($correctTable, $allTables)) {
+                // 查找可能的错误表名
+                $sourceTable = null;
+                foreach ($wrongTables as $wrongTable) {
+                    if (in_array($wrongTable, $allTables)) {
+                        $sourceTable = $wrongTable;
+                        break;
+                    }
                 }
-                // 如果有多个表存在，保留正确的表，删除其他表
-                else if (count($existingTables) > 1) {
-                    foreach ($existingTables as $table) {
-                        if ($table != $mainTable) {
-                            DB::statement("DROP TABLE IF EXISTS `{$table}`");
-                            Log::info("Dropped duplicate table: {$table}");
+                
+                if ($sourceTable) {
+                    // 重命名错误表为正确表名
+                    DB::statement("RENAME TABLE `{$sourceTable}` TO `{$correctTable}`");
+                    Log::info("CheckSystemVersion: Renamed table from {$sourceTable} to {$correctTable}");
+                } else {
+                    // 如果没有可用表，创建新表
+                    DB::statement("
+                        CREATE TABLE IF NOT EXISTS `{$correctTable}` (
+                          `k` varchar(150) NOT NULL,
+                          `v` text,
+                          PRIMARY KEY (`k`),
+                          UNIQUE KEY `k` (`k`)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+                    ");
+                    Log::info("CheckSystemVersion: Created missing table: {$correctTable}");
+                    
+                    // 初始化系统版本
+                    DB::statement("INSERT INTO `{$correctTable}` (`k`, `v`) VALUES ('system_version', 'v3.1.3')");
+                }
+            } else {
+                // 正确表名存在，检查并删除错误表
+                foreach ($wrongTables as $wrongTable) {
+                    if (in_array($wrongTable, $allTables)) {
+                        // 先合并数据
+                        try {
+                            DB::statement("INSERT IGNORE INTO `{$correctTable}` SELECT * FROM `{$wrongTable}`");
+                            Log::info("CheckSystemVersion: Merged data from {$wrongTable} to {$correctTable}");
+                        } catch (\Exception $e) {
+                            Log::warning("CheckSystemVersion: Failed to merge data: " . $e->getMessage());
                         }
+                        
+                        // 删除错误表
+                        DB::statement("DROP TABLE IF EXISTS `{$wrongTable}`");
+                        Log::info("CheckSystemVersion: Dropped duplicate table: {$wrongTable}");
                     }
                 }
             }
