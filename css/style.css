@@ -142,7 +142,7 @@ body {
     font-weight: 600;
 }
 
-.card-body {
+.card:not([class*='bg-']) .card-body {
     background: white;
 }
 
