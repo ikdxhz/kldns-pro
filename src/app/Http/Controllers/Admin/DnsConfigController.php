@@ -127,18 +127,11 @@ class DnsConfigController extends Controller
                         $row->save();
                     } else {
                         // 检查配置名称是否已存在
-                        $exists = false;
-                        try {
-                            $exists = DnsConfig::where('name', $name)
-                                            ->where('dns', $dns)
-                                            ->first();
-                        } catch (\Exception $e) {
-                            // 可能是表结构问题，尝试修复后再次检查
-                            $this->ensureTableStructure();
-                            $exists = DnsConfig::where('name', $name)
-                                            ->where('dns', $dns)
-                                            ->first();
-                        }
+                        // 由 ikd-xhz 修复：使用DB门面和参数绑定防止SQL注入和类型错误
+                        $exists = \DB::table('dns_configs')
+                                    ->where('name', '=', $name)
+                                    ->where('dns', '=', $dns)
+                                    ->first();
                         
                         if ($exists) {
                             $result['message'] = '该平台下已存在同名配置';
