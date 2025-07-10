@@ -172,41 +172,15 @@
         methods: {
             login: function () {
                 var vm = this;
-                $.ajax({
-                    type: "POST",
-                    url: '/admin/login',
-                    data: $("#form-login").serialize(),
-                    beforeSend: function (request) {
-                        var token = document.head.querySelector('meta[name="csrf-token"]');
-                        if (token) {
-                            request.setRequestHeader("X-CSRF-TOKEN", token.content);
-                        } else {
-                            console.error('CSRF token not found');
-                        }
-                        layer.load(2, {shade: [0.3, '#fff']});
-                    },
-                    error: function (request) {
-                        layer.closeAll('loading');
-                        if (request.status === 419) {
-                            layer.alert('页面已过期，请刷新页面！', {
-                                closeBtn: 0
-                            }, function (i) {
-                                window.location.reload();
-                            });
-                        } else {
-                            layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
-                        }
-                    },
-                    success: function (data) {
-                        layer.closeAll('loading');
+                this.$post('/admin/login', $("#form-login").serialize())
+                    .then(function (data) {
                         $("#code").click();
                         if (data.status === 0) {
                             location.href = data.go ? data.go : "{{ request()->get('go','/') }}";
                         } else {
-                            layer.msg(data.message, {icon: 2, time: 2000});
+                            vm.$message(data.message, 'error');
                         }
-                    }
-                });
+                    });
             },
         },
         mounted: function () {
