@@ -8,6 +8,7 @@
  * @package    App\Models
  * @author     ｉｋｄｘｈｚ
  * @version    3.1.3
+ * @maintainer ⓘⓚⓓⓧⓗⓩ
  */
 
 namespace App\Models;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Log;
  * DNS配置模型
  * 
  * @author     𝕚𝕜𝕕𝕩𝕙𝕫
+ * @version    3.1.3
  */
 class DnsConfig extends Model
 {
@@ -30,14 +32,14 @@ class DnsConfig extends Model
      * 
      * 优化: 防止表前缀重复问题
      * @developer ¡kdxhž
+     * @version   3.1.3
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         
-        // 直接设置完整表名，防止前缀被重复添加
-        $prefix = config('database.connections.mysql.prefix', 'kldns_');
-        $this->setTable($prefix . 'dns_configs');
+        // 设置表名，使用safeTable方法确保前缀正确
+        $this->table = static::safeTable('dns_configs');
         
         // 修复表结构问题
         $this->fixTableStructure();
@@ -47,12 +49,12 @@ class DnsConfig extends Model
      * 修复表结构问题
      * 
      * @author i​k​d​x​h​z
+     * @version 3.1.3
      */
     protected function fixTableStructure()
     {
         try {
-            $prefix = config('database.connections.mysql.prefix', 'kldns_');
-            $tableName = $prefix . 'dns_configs';
+            $tableName = $this->getTable(); // 使用getTable方法获取正确的表名
             
             // 检查表是否存在
             $tableExists = DB::select("SHOW TABLES LIKE '{$tableName}'");
@@ -73,21 +75,50 @@ class DnsConfig extends Model
                 Log::info("Created missing table: {$tableName}");
             } else {
                 // 检查name字段是否存在
-                $nameColumnExists = DB::select("SHOW COLUMNS FROM `{$tableName}` LIKE 'name'");
-                if (empty($nameColumnExists)) {
-                    DB::statement("ALTER TABLE `{$tableName}` ADD COLUMN `name` varchar(150) NOT NULL DEFAULT CONCAT(dns, '-默认配置') AFTER `id`");
-                    DB::statement("UPDATE `{$tableName}` SET `name` = CONCAT(dns, '-默认配置') WHERE `name` = '' OR `name` IS NULL");
-                    Log::info("Added missing name column to {$tableName}");
+                try {
+                    $nameColumnExists = DB::select("SHOW COLUMNS FROM `{$tableName}` LIKE 'name'");
+                    if (empty($nameColumnExists)) {
+                        DB::statement("ALTER TABLE `{$tableName}` ADD COLUMN `name` varchar(150) NOT NULL DEFAULT CONCAT(dns, '-默认配置') AFTER `id`");
+                        DB::statement("UPDATE `{$tableName}` SET `name` = CONCAT(dns, '-默认配置') WHERE `name` = '' OR `name` IS NULL");
+                        Log::info("Added missing name column to {$tableName}");
+                    }
+                    
+                    // 检查id字段是否为主键
+                    $primaryKeyExists = DB::select("SHOW KEYS FROM `{$tableName}` WHERE Key_name = 'PRIMARY'");
+                    if (empty($primaryKeyExists)) {
+                        DB::statement("ALTER TABLE `{$tableName}` ADD COLUMN `id` int(10) unsigned NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`id`)");
+                        Log::info("Added missing primary key to {$tableName}");
+                    }
+                    
+                    // 检查name_dns唯一索引
+                    $uniqueKeyExists = DB::select("SHOW KEYS FROM `{$tableName}` WHERE Key_name = 'name_dns'");
+                    if (empty($uniqueKeyExists)) {
+                        DB::statement("ALTER TABLE `{$tableName}` ADD UNIQUE KEY `name_dns` (`name`, `dns`)");
+                        Log::info("Added missing unique key to {$tableName}");
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Error checking/fixing columns: " . $e->getMessage());
                 }
             }
             
-            // 检查并删除可能存在的重复前缀表
-            $wrongTable = $prefix . $prefix . 'dns_configs';
-            $wrongTableExists = DB::select("SHOW TABLES LIKE '{$wrongTable}'");
-            if (!empty($wrongTableExists)) {
-                DB::statement("DROP TABLE IF EXISTS `{$wrongTable}`");
-                Log::info("Dropped duplicate table: {$wrongTable}");
+            // 处理可能存在的旧结构问题 - 由 !kdxんz 添加
+            try {
+                // 如果dns是主键但应该是id
+                $primaryKeyInfo = DB::select("SHOW KEYS FROM `{$tableName}` WHERE Key_name = 'PRIMARY'");
+                if (!empty($primaryKeyInfo) && $primaryKeyInfo[0]->Column_name === 'dns') {
+                    // 创建临时表
+                    $tempTable = $tableName . '_temp';
+                    DB::statement("CREATE TABLE `{$tempTable}` LIKE `{$tableName}`");
+                    DB::statement("ALTER TABLE `{$tempTable}` DROP PRIMARY KEY, ADD COLUMN `id` int(10) unsigned NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`id`)");
+                    DB::statement("INSERT INTO `{$tempTable}` (`dns`, `name`, `config`, `created_at`, `updated_at`) SELECT `dns`, IFNULL(`name`, CONCAT(`dns`, '-默认配置')) as `name`, `config`, `created_at`, `updated_at` FROM `{$tableName}`");
+                    DB::statement("DROP TABLE `{$tableName}`");
+                    DB::statement("RENAME TABLE `{$tempTable}` TO `{$tableName}`");
+                    Log::info("Fixed table structure: {$tableName} - changed primary key from dns to id");
+                }
+            } catch (\Exception $e) {
+                Log::warning("Error fixing primary key structure: " . $e->getMessage());
             }
+            
         } catch (\Exception $e) {
             Log::error("Failed to fix DNS configs table structure: " . $e->getMessage());
         }
