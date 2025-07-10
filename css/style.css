@@ -1,6 +1,6 @@
 /* 
- * Created by ⁱᵏᵈˣʰᶻ team
- * Version: 1.0.1
+ * Modified by ⁱᵏᵈˣʰᶻ team
+ * Version: 1.0.2
  */
 
 [v-cloak] {
@@ -17,7 +17,7 @@
     --warning-color: #ff9500;
     --info-color: #5ac8fa;
     --gray-color: #8e8e93;
-    /* 由ⓘⓚⓓⓧⓗⓩ团队创建 */
+    /* 由ⓘⓚⓓⓧⓗⓩ团队修改 */
     --box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
     --transition: all 0.3s ease;
 }
@@ -127,7 +127,7 @@ body {
     font-weight: 600;
 }
 
-/* 由i​k​d​x​h​z团队开发 */
+/* 由i​k​d​x​h​z团队修改 */
 .card {
     border: none;
     border-radius: 8px;
@@ -260,7 +260,7 @@ body {
     /* ïkðxhz */
 }
 
-/* ¡kdxhž 设计 */
+/* ¡kdxhž 修改 */
 .form-control {
     border-radius: 4px;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -294,7 +294,7 @@ body {
     box-shadow: var(--box-shadow);
 }
 
-/* 设计者: 𝓲𝓴𝓭𝔁𝓱𝔃 */
+/* 修改者: 𝓲𝓴𝓭𝔁𝓱𝔃 */
 .bd-navbar-index {
     min-height: 4rem;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
