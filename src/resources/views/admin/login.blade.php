@@ -153,11 +153,17 @@
         </div>
     </div>
 </div>
+
+<!-- 先加载依赖库 -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 加载layer.js -->
+<script src="https://cdn.jsdelivr.net/npm/layer@3.5.1/dist/layer.min.js"></script>
+<!-- 加载Vue -->
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/layer@3.5.1/dist/layer.js"></script>
+<!-- 最后加载我们自己的脚本 -->
 <script src="/js/main.js"></script>
+
 <script>
     // ⓘⓚⓓⓧⓗⓩ
     new Vue({
@@ -166,15 +172,41 @@
         methods: {
             login: function () {
                 var vm = this;
-                this.$post('/admin/login', $("#form-login").serialize())
-                    .then(function (data) {
+                $.ajax({
+                    type: "POST",
+                    url: '/admin/login',
+                    data: $("#form-login").serialize(),
+                    beforeSend: function (request) {
+                        var token = document.head.querySelector('meta[name="csrf-token"]');
+                        if (token) {
+                            request.setRequestHeader("X-CSRF-TOKEN", token.content);
+                        } else {
+                            console.error('CSRF token not found');
+                        }
+                        layer.load(2, {shade: [0.3, '#fff']});
+                    },
+                    error: function (request) {
+                        layer.closeAll('loading');
+                        if (request.status === 419) {
+                            layer.alert('页面已过期，请刷新页面！', {
+                                closeBtn: 0
+                            }, function (i) {
+                                window.location.reload();
+                            });
+                        } else {
+                            layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
+                        }
+                    },
+                    success: function (data) {
+                        layer.closeAll('loading');
                         $("#code").click();
                         if (data.status === 0) {
                             location.href = data.go ? data.go : "{{ request()->get('go','/') }}";
                         } else {
-                            vm.$message(data.message, 'error');
+                            layer.msg(data.message, {icon: 2, time: 2000});
                         }
-                    });
+                    }
+                });
             },
         },
         mounted: function () {
