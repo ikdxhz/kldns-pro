@@ -7,6 +7,8 @@
  * 
  * @package    App\Models
  * @author     ｉｋｄｘｈｚ 
+ * @version    3.1.3
+ * @maintainer ｉｋｄｘｈｚ
  */
 
 namespace App\Models;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Log;
  * 系统配置模型
  * 
  * @author     𝕚𝕜𝕕𝕩𝕙𝕫
+ * @version    3.1.3
  */
 class Config extends Model
 {
@@ -31,16 +34,16 @@ class Config extends Model
      * 
      * 优化: 防止表前缀重复问题
      * @developer ¡kdxhž
+     * @version   3.1.3
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         
-        // 直接设置完整表名，防止前缀被重复添加
-        $prefix = config('database.connections.mysql.prefix', 'kldns_');
-        $this->setTable($prefix . 'configs');
+        // 设置表名，使用safeTable方法确保前缀正确
+        $this->table = static::safeTable('configs');
         
-        // 修复表名问题（只在实例化时运行一次）
+        // 修复表前缀问题
         $this->fixTablePrefixIssue();
     }
     
@@ -50,10 +53,11 @@ class Config extends Model
      * @param string $table 表名
      * @return $this
      * @author ⓘⓚⓓⓧⓗⓩ
+     * @deprecated 3.1.3 请使用Model::safeTable方法
      */
     public function setTable($table)
     {
-        $this->table = $table;
+        $this->table = static::safeTable($table);
         return $this;
     }
     
@@ -61,54 +65,129 @@ class Config extends Model
      * 获取表名（覆盖默认行为）
      * 
      * @return string
+     * @author ïkðxhz
      */
     public function getTable()
     {
-        return $this->table;
+        if (isset($this->table)) {
+            return static::safeTable($this->table);
+        }
+        return parent::getTable();
     }
     
     /**
      * 检查并修复可能错误创建的表名前缀重复问题
      * 
      * @developer i​k​d​x​h​z
+     * @version   3.1.3
      */
     protected function fixTablePrefixIssue()
     {
         try {
-            $prefix = config('database.connections.mysql.prefix', 'kldns_');
-            $correctTable = $prefix . 'configs';
-            $wrongTable = $prefix . $prefix . 'configs';
+            $tableName = $this->getTable(); // 使用getTable获取正确的表名
+            $prefix = $this->getTablePrefix();
             
-            // 检查错误表名是否存在
-            $tableExists = false;
-            try {
-                $tableExists = DB::select("SHOW TABLES LIKE '{$wrongTable}'");
-            } catch (\Exception $e) {
-                Log::error("Failed to check if table exists: " . $e->getMessage());
-                return;
+            // 可能存在的错误表名
+            $possibleWrongTables = [
+                $prefix . $prefix . 'configs',   // 双重前缀
+                'configs',                       // 无前缀
+                $prefix . 'kldns_configs'        // 混合前缀
+            ];
+            
+            // 获取所有表
+            $tables = DB::select("SHOW TABLES");
+            $allTables = [];
+            foreach ($tables as $table) {
+                $allTables[] = array_values((array)$table)[0];
             }
             
-            if (!empty($tableExists)) {
-                try {
-                    // 检查正确表名是否存在
-                    $correctTableExists = DB::select("SHOW TABLES LIKE '{$correctTable}'");
-                    
-                    if (empty($correctTableExists)) {
-                        // 如果正确表名不存在，重命名错误表名
-                        DB::statement("RENAME TABLE `{$wrongTable}` TO `{$correctTable}`");
-                        Log::info("Fixed table name: renamed {$wrongTable} to {$correctTable}");
-                    } else {
-                        // 如果两个表都存在，合并数据后删除错误表
-                        DB::statement("INSERT IGNORE INTO `{$correctTable}` SELECT * FROM `{$wrongTable}`");
-                        DB::statement("DROP TABLE `{$wrongTable}`");
-                        Log::info("Merged data from {$wrongTable} to {$correctTable} and dropped the duplicate table");
+            // 先确保正确的表存在
+            if (!in_array($tableName, $allTables)) {
+                // 正确的表不存在，检查是否有错误表可以重命名
+                $sourceTable = null;
+                foreach ($possibleWrongTables as $wrongTable) {
+                    if (in_array($wrongTable, $allTables)) {
+                        $sourceTable = $wrongTable;
+                        break;
                     }
-                } catch (\Exception $e) {
-                    Log::error("Failed to fix table: " . $e->getMessage());
+                }
+                
+                if ($sourceTable) {
+                    // 重命名错误表为正确表名
+                    DB::statement("RENAME TABLE `{$sourceTable}` TO `{$tableName}`");
+                    Log::info("Renamed table from {$sourceTable} to {$tableName}");
+                } else {
+                    // 如果没有任何可用表，创建新表
+                    $this->createConfigsTable($tableName);
+                }
+            } else {
+                // 正确的表存在，删除所有可能的错误表
+                foreach ($possibleWrongTables as $wrongTable) {
+                    if (in_array($wrongTable, $allTables) && $wrongTable !== $tableName) {
+                        // 先尝试合并数据
+                        try {
+                            DB::statement("INSERT IGNORE INTO `{$tableName}` SELECT * FROM `{$wrongTable}`");
+                            Log::info("Merged data from {$wrongTable} to {$tableName}");
+                        } catch (\Exception $e) {
+                            Log::warning("Failed to merge data from {$wrongTable}: " . $e->getMessage());
+                        }
+                        
+                        // 然后删除错误表
+                        DB::statement("DROP TABLE IF EXISTS `{$wrongTable}`");
+                        Log::info("Dropped duplicate table: {$wrongTable}");
+                    }
                 }
             }
+            
+            // 确保有系统版本记录
+            $this->ensureSystemVersionExists($tableName);
+            
         } catch (\Exception $e) {
             Log::error("Failed to fix table prefix: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 创建配置表
+     * 
+     * @param string $tableName
+     * @author ikd_xhz
+     * @version 3.1.3
+     */
+    private function createConfigsTable($tableName)
+    {
+        try {
+            DB::statement("
+                CREATE TABLE IF NOT EXISTS `{$tableName}` (
+                  `k` varchar(150) NOT NULL,
+                  `v` text,
+                  PRIMARY KEY (`k`),
+                  UNIQUE KEY `k` (`k`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+            ");
+            Log::info("Created configs table: {$tableName}");
+        } catch (\Exception $e) {
+            Log::error("Failed to create configs table: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 确保系统版本记录存在
+     * 
+     * @param string $tableName
+     * @author !кdxんz
+     * @version 3.1.3
+     */
+    private function ensureSystemVersionExists($tableName)
+    {
+        try {
+            $versionExists = DB::select("SELECT * FROM `{$tableName}` WHERE `k` = 'system_version'");
+            if (empty($versionExists)) {
+                DB::statement("INSERT INTO `{$tableName}` (`k`, `v`) VALUES ('system_version', '".self::SYSTEM_VERSION."')");
+                Log::info("Created system_version record with value: " . self::SYSTEM_VERSION);
+            }
+        } catch (\Exception $e) {
+            Log::warning("Failed to check/create system version: " . $e->getMessage());
         }
     }
     
@@ -121,13 +200,24 @@ class Config extends Model
     public static function getVersion()
     {
         try {
-            // 使用safeTable方法确保表名正确
-            $tableName = self::safeTable('configs');
+            // 使用完整表名避免前缀问题
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            $tableName = $prefix . 'configs';
+            
+            // 检查表是否存在
+            $tableExists = DB::select("SHOW TABLES LIKE '{$tableName}'");
+            if (empty($tableExists)) {
+                return 'v3.0.0';  // 表不存在，返回默认版本
+            }
             
             // 直接使用DB查询而不是模型，以避免前缀问题
-            $version = DB::table($tableName)->where('k', 'system_version')->first();
+            $result = DB::select("SELECT v FROM `{$tableName}` WHERE k = 'system_version' LIMIT 1");
             
-            return $version ? $version->v : 'v3.0.0'; // 默认为初始版本
+            if (!empty($result)) {
+                return $result[0]->v;
+            }
+            
+            return 'v3.0.0'; // 默认为初始版本
         } catch (\Exception $e) {
             Log::error("Failed to get version: " . $e->getMessage());
             return 'v3.0.0'; // 出错时返回默认版本
@@ -148,24 +238,36 @@ class Config extends Model
             // 如果当前版本低于系统版本，执行更新
             if (version_compare($currentVersion, self::SYSTEM_VERSION, '<')) {
                 $updates = self::getUpdateScripts($currentVersion, self::SYSTEM_VERSION);
-                // 使用safeTable方法确保表名正确
-                $tableName = self::safeTable('configs');
+                $prefix = config('database.connections.mysql.prefix', 'kldns_');
+                $tableName = $prefix . 'configs';
+                
+                // 确保表存在
+                $tableExists = DB::select("SHOW TABLES LIKE '{$tableName}'");
+                if (empty($tableExists)) {
+                    // 表不存在，创建表
+                    DB::statement("
+                        CREATE TABLE IF NOT EXISTS `{$tableName}` (
+                          `k` varchar(150) NOT NULL,
+                          `v` text,
+                          PRIMARY KEY (`k`),
+                          UNIQUE KEY `k` (`k`)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+                    ");
+                    Log::info("Created missing configs table: {$tableName}");
+                }
                 
                 foreach ($updates as $version => $script) {
                     if (self::executeUpdateScript($script)) {
                         // 更新系统版本记录
-                        DB::table($tableName)->updateOrInsert(
-                            ['k' => 'system_version'],
-                            ['v' => $version]
-                        );
+                        DB::statement("INSERT INTO `{$tableName}` (`k`, `v`) VALUES ('system_version', '{$version}') 
+                                      ON DUPLICATE KEY UPDATE `v` = '{$version}'");
+                        Log::info("Updated system version to {$version}");
                     }
                 }
                 
                 // 最后更新到当前版本
-                DB::table($tableName)->updateOrInsert(
-                    ['k' => 'system_version'],
-                    ['v' => self::SYSTEM_VERSION]
-                );
+                DB::statement("INSERT INTO `{$tableName}` (`k`, `v`) VALUES ('system_version', '".self::SYSTEM_VERSION."') 
+                              ON DUPLICATE KEY UPDATE `v` = '".self::SYSTEM_VERSION."'");
                 
                 return true;
             }
