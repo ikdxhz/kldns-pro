@@ -146,7 +146,7 @@ class DomainController extends Controller
 
     private function select(Request $request)
     {
-        $data = Domain::orderBy('did', 'desc')->pageSelect();
+        $data = Domain::with('dnsConfig')->orderBy('did', 'desc')->pageSelect();
         return ['status' => 0, 'message' => '', 'data' => $data];
     }
 
