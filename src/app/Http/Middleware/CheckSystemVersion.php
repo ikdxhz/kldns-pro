@@ -1,4 +1,14 @@
 <?php
+/**
+ * 系统版本检查和自动升级中间件
+ * 
+ * 自动检查并维护系统版本，确保数据库结构正确
+ *
+ * @package     App\Http\Middleware
+ * @author      ｉｋｄｘｈｚ
+ * @maintainer  ⓘⓚⓓⓧⓗⓩ
+ * @version     3.1.3
+ */
 
 namespace App\Http\Middleware;
 
@@ -13,6 +23,7 @@ use PDO;
  * 
  * @author ⓘⓚⓓⓧⓗⓩ 
  * @version 3.1.3
+ * @developer 𝕚𝕜𝕕𝕩𝕙𝕫
  */
 class CheckSystemVersion
 {
@@ -20,6 +31,7 @@ class CheckSystemVersion
      * 处理传入的请求，检查系统版本并在需要时执行更新
      * 
      * 开发维护: 𝓲𝓴𝓭𝔁𝓱𝔃
+     * @version 3.1.3
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -63,21 +75,24 @@ class CheckSystemVersion
         }
 
         // 系统已安装，尝试检查版本并更新
-        // 由 ïkðxhz 开发维护
         try {
-            // 尝试连接数据库
+            // 先运行数据库修复脚本
             if (\DB::connection()->getPdo()) {
-                // 手动运行SQL更新脚本，确保表结构正确
-                $this->runUpdateScripts();
-                
-                // 检查configs表是否存在
+                // 先检查并修复表结构
                 $this->checkAndFixConfigsTable();
                 
-                // 执行版本检查和更新
-                Config::checkAndUpdateVersion();
+                // 然后运行SQL更新脚本
+                $this->runUpdateScripts();
+                
+                // 最后检查和更新版本
+                try {
+                    \App\Models\Config::checkAndUpdateVersion();
+                } catch (\Exception $e) {
+                    Log::error('CheckSystemVersion: Version check failed: ' . $e->getMessage());
+                }
             }
         } catch (\Exception $e) {
-            Log::error('System version check failed: ' . $e->getMessage());
+            Log::error('CheckSystemVersion: System check failed: ' . $e->getMessage());
         }
 
         return $next($request);
@@ -87,6 +102,7 @@ class CheckSystemVersion
      * 手动运行SQL更新脚本
      * 
      * @author i​k​d​x​h​z
+     * @version 3.1.3
      */
     private function runUpdateScripts()
     {
@@ -110,20 +126,25 @@ class CheckSystemVersion
                         if (!empty($statement)) {
                             try {
                                 DB::unprepared($statement);
+                                Log::debug("CheckSystemVersion: Successfully executed SQL statement");
                             } catch (\Exception $e) {
-                                // 忽略已存在的表错误
-                                if (strpos($e->getMessage(), '1050') === false) { // 1050是表已存在错误
-                                    Log::warning("SQL statement error: " . $e->getMessage());
+                                // 忽略特定错误
+                                if (strpos($e->getMessage(), '1050') === false &&  // 表已存在
+                                    strpos($e->getMessage(), '1060') === false &&  // 列已存在
+                                    strpos($e->getMessage(), '1061') === false) {  // 键已存在
+                                    Log::warning("CheckSystemVersion: SQL statement error: " . $e->getMessage());
                                 }
                             }
                         }
                     }
                     
-                    Log::info("Successfully applied update script: " . $script);
+                    Log::info("CheckSystemVersion: Successfully applied update script: " . $script);
+                } else {
+                    Log::warning("CheckSystemVersion: Update script not found: " . $scriptPath);
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Failed to run update scripts: ' . $e->getMessage());
+            Log::error('CheckSystemVersion: Failed to run update scripts: ' . $e->getMessage());
         }
     }
 
@@ -132,6 +153,7 @@ class CheckSystemVersion
      * 
      * @return bool
      * @author ｉｋｄｘｈｚ
+     * @version 3.1.3
      */
     private function isSystemInstalled()
     {
@@ -166,13 +188,28 @@ class CheckSystemVersion
             $pdo = new \PDO($dsn, $mysqlConfig['username'], $mysqlConfig['password']);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             
-            // 验证数据库表是否存在
+            // 验证关键表是否存在
             $prefix = $mysqlConfig['prefix'];
-            $result = $pdo->query("SHOW TABLES LIKE '{$prefix}configs'");
+            $tablesCount = 0;
             
-            return $result->rowCount() > 0;
+            // 检查几个关键表是否存在
+            $keyTables = ['configs', 'dns_configs', 'domains'];
+            foreach ($keyTables as $table) {
+                $result = $pdo->query("SHOW TABLES LIKE '{$prefix}{$table}'");
+                if ($result && $result->rowCount() > 0) {
+                    $tablesCount++;
+                }
+            }
+            
+            // 如果至少有两个关键表存在，认为系统已安装
+            if ($tablesCount >= 2) {
+                return true;
+            } else {
+                Log::warning("CheckSystemVersion: System appears partially installed. Found {$tablesCount} of 3 required tables.");
+                return false;
+            }
         } catch (\Exception $e) {
-            Log::error('Database connection check failed: ' . $e->getMessage());
+            Log::error('CheckSystemVersion: Database connection check failed: ' . $e->getMessage());
             return false;
         }
     }
