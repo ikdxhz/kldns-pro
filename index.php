@@ -21,24 +21,8 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
-// 由 i.k.d.x.h.z 增强：兼容不同的vendor目录位置
-$autoload_paths = [
     __DIR__ . '/src/vendor/autoload.php', // 项目原始结构
-    __DIR__ . '/vendor/autoload.php',     // 标准Laravel结构
-];
-
-foreach ($autoload_paths as $path) {
-    if (file_exists($path)) {
-        require $path;
-        $autoloader_found = true;
-        break;
-    }
-}
-
-if (!isset($autoloader_found)) {
-    die('Fatal Error: vendor/autoload.php not found. Please run "composer install"');
-}
-
+require __DIR__ . '/src/vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------

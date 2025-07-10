@@ -5,7 +5,7 @@
         <div class="card">
             <div class="card-header">
                 域名解析平台接口配置
-                <a href="#modal-store" data-toggle="modal" @click="storeInfo={dns:0, name:''}"
+                <a href="#modal-store" data-toggle="modal" @click="storeInfo={dns:0}"
                    class="float-right btn btn-sm btn-primary">添加</a>
             </div>
             <div class="card-body">
@@ -14,7 +14,6 @@
                         <thead>
                         <tr>
                             <th>平台</th>
-                            <th>配置名称</th>
                             <th>配置</th>
                             <th>添加时间</th>
                             <th>操作</th>
@@ -23,14 +22,13 @@
                         <tbody v-cloak="">
                         <tr v-for="(row,i) in data.data" :key="i">
                             <td>@{{ row.dns }}</td>
-                            <td>@{{ row.name }}</td>
                             <td>@{{ row.config }}</td>
                             <td>@{{ row.created_at }}</td>
                             <td>
                                 <a href="#modal-store" class="btn btn-sm btn-info" data-toggle="modal"
                                    @click="storeInfo=Object.assign({},row)">编辑
                                 </a>
-                                <a class="btn btn-sm btn-danger" @click="del(row.id)">删除</a>
+                                <a class="btn btn-sm btn-danger" @click="del(row.dns)">删除</a>
                             </td>
                         </tr>
                         </tbody>
@@ -45,7 +43,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">DNS接口配置添加/修改</h5>
+                        <h5 class="modal-title" id="exampleModalLabel">用户组修改/添加</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -53,14 +51,6 @@
                     <div class="modal-body">
                         <form id="form-store">
                             <input type="hidden" name="action" value="store">
-                            <input type="hidden" name="id" :value="storeInfo.id" v-if="storeInfo.id">
-                            <div class="form-group row">
-                                <label for="staticEmail" class="col-sm-3 col-form-label">配置名称</label>
-                                <div class="col-sm-9">
-                                    <input type="text" name="name" class="form-control" placeholder="请输入配置名称" v-model="storeInfo.name">
-                                    <div class="input_tips">配置名称用于区分同一平台的不同配置</div>
-                                </div>
-                            </div>
                             <div class="form-group row">
                                 <label for="staticEmail" class="col-sm-3 col-form-label">解析平台</label>
                                 <div class="col-sm-9">
@@ -101,10 +91,7 @@
                     page: 1
                 },
                 data: {},
-                storeInfo: {
-                    name: '',
-                    dns: 0
-                },
+                storeInfo: {},
                 dnsList: []
             },
             methods: {
@@ -147,7 +134,7 @@
                 del: function (id) {
                     if (!confirm('确认删除？')) return;
                     var vm = this;
-                    this.$post("/admin/config/dns", {action: 'delete', id: id})
+                    this.$post("/admin/config/dns", {action: 'delete', dns: id})
                         .then(function (data) {
                             if (data.status === 0) {
                                 vm.getList();

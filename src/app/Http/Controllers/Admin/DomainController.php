@@ -39,12 +39,12 @@ class DomainController extends Controller
     private function domainList(Request $request)
     {
         $result = ['status' => -1];
-        $dns_config_id = $request->post('dns_config_id');
-        if (!$dns_config_id) {
-            $result['message'] = '请选择域名解析平台配置';
-        } elseif (!$config = DnsConfig::find($dns_config_id)) {
+        $dns = $request->post('dns');
+        if (!$dns) {
+            $result['message'] = '请选择域名解析平台';
+        } elseif (!$config = DnsConfig::find($dns)) {
             $result['message'] = '请先对此解析平台进行配置';
-        } elseif (!$_dns = Helper::getModel($config->dns)) {
+        } elseif (!$_dns = Helper::getModel($dns)) {
             $result['message'] = '暂不支持此域名解析平台';
         } else {
             $_dns->config($config->config);
@@ -52,7 +52,7 @@ class DomainController extends Controller
             if ($list) {
                 $data = [];
                 foreach ($list as $domain) {
-                    if (!Domain::where('domain', $domain['Domain'])->where('dns_config_id', $dns_config_id)->first()) {
+                    if (!Domain::where('domain', $domain['Domain'])->first()) {
                         $data[] = [
                             'domain' => $domain['Domain'],
                             'domain_id' => $domain['DomainId']
@@ -98,20 +98,20 @@ class DomainController extends Controller
     private function add(Request $request)
     {
         $result = ['status' => -1];
-        $dns_config_id = $request->post('dns_config_id');
+        $dns = $request->post('dns');
         $domain = $request->post('domain');
         $domain = explode(',', trim($domain));
         $desc = $request->post('desc');
         $groups = $request->post('groups');
         $point = abs(intval($request->post('point')));
 
-        if (!$dns_config_id) {
-            $result['message'] = '请选择域名解析平台配置';
+        if (!$dns) {
+            $result['message'] = '请选择域名解析平台';
         } elseif (count($domain) != 2 || !$domain[0]) {
             $result['message'] = '请选择要添加的域名';
-        } elseif (!$config = DnsConfig::find($dns_config_id)) {
+        } elseif (!$config = DnsConfig::find($dns)) {
             $result['message'] = '请先对此解析平台进行配置';
-        } elseif (!$_dns = Helper::getModel($config->dns)) {
+        } elseif (!$_dns = Helper::getModel($dns)) {
             $result['message'] = '暂不支持此域名解析平台';
         } elseif (empty($groups)) {
             $result['message'] = '请选择用户组';
@@ -122,13 +122,12 @@ class DomainController extends Controller
                 if (in_array('0', $groups)) {
                     $groups = ["0"];
                 }
-                if (Domain::where('dns_config_id', $dns_config_id)->where('domain_id', $domain[0])->first()) {
+                if (Domain::where('dns', $dns)->where('domain_id', $domain[0])->first()) {
                     $result['message'] = '此域名已经添加过';
                 } elseif (Domain::create([
                     'domain' => $domain[1],
                     'domain_id' => $domain[0],
-                    'dns' => $config->dns,
-                    'dns_config_id' => $dns_config_id,
+                    'dns' => $dns,
                     'groups' => implode(',', $groups),
                     'desc' => $desc,
                     'point' => $point
@@ -146,7 +145,7 @@ class DomainController extends Controller
 
     private function select(Request $request)
     {
-        $data = Domain::with('dnsConfig')->orderBy('did', 'desc')->pageSelect();
+        $data = Domain::orderBy('did', 'desc')->pageSelect();
         return ['status' => 0, 'message' => '', 'data' => $data];
     }
 
@@ -164,4 +163,5 @@ class DomainController extends Controller
         }
         return $result;
     }
+
 }
