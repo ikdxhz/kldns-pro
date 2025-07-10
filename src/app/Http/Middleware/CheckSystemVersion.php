@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Models\Config;
 use Closure;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDO;
 
 class CheckSystemVersion
 {
@@ -35,6 +37,9 @@ class CheckSystemVersion
         try {
             // 尝试连接数据库
             if (\DB::connection()->getPdo()) {
+                // 手动运行SQL更新脚本，确保表结构正确
+                $this->runUpdateScripts();
+                
                 // 检查configs表是否存在
                 $this->checkAndFixConfigsTable();
                 
@@ -46,6 +51,48 @@ class CheckSystemVersion
         }
 
         return $next($request);
+    }
+    
+    /**
+     * 手动运行SQL更新脚本
+     */
+    private function runUpdateScripts()
+    {
+        try {
+            $updateScripts = [
+                'update.3.1.3.sql'  // 运行最新的修复脚本
+            ];
+            
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            
+            foreach ($updateScripts as $script) {
+                $scriptPath = base_path('src/install/' . $script);
+                
+                if (file_exists($scriptPath)) {
+                    $sql = file_get_contents($scriptPath);
+                    $sql = str_replace('`kldns_', '`' . $prefix, $sql);
+                    
+                    $statements = array_filter(array_map('trim', explode(';', $sql)));
+                    
+                    foreach ($statements as $statement) {
+                        if (!empty($statement)) {
+                            try {
+                                DB::unprepared($statement);
+                            } catch (\Exception $e) {
+                                // 忽略已存在的表错误
+                                if (strpos($e->getMessage(), '1050') === false) { // 1050是表已存在错误
+                                    Log::warning("SQL statement error: " . $e->getMessage());
+                                }
+                            }
+                        }
+                    }
+                    
+                    Log::info("Successfully applied update script: " . $script);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to run update scripts: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -126,14 +173,14 @@ class CheckSystemVersion
                 // 如果正确表名不存在但其他表名存在
                 if (!in_array($mainTable, $existingTables)) {
                     $sourceTable = $existingTables[0]; // 使用第一个存在的表
-                    \DB::statement("RENAME TABLE `{$sourceTable}` TO `{$mainTable}`");
+                    DB::statement("RENAME TABLE `{$sourceTable}` TO `{$mainTable}`");
                     Log::info("Renamed table from {$sourceTable} to {$mainTable}");
                 }
                 // 如果有多个表存在，保留正确的表，删除其他表
                 else if (count($existingTables) > 1) {
                     foreach ($existingTables as $table) {
                         if ($table != $mainTable) {
-                            \DB::statement("DROP TABLE IF EXISTS `{$table}`");
+                            DB::statement("DROP TABLE IF EXISTS `{$table}`");
                             Log::info("Dropped duplicate table: {$table}");
                         }
                     }
