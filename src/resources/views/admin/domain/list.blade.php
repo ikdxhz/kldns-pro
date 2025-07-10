@@ -15,6 +15,7 @@
                         <tr>
                             <th>编号</th>
                             <th>平台</th>
+                            <th>配置名称</th>
                             <th>DomainId</th>
                             <th>域名</th>
                             <th title="可使用此域名的用户组">用户组</th>
@@ -28,6 +29,7 @@
                         <tr v-for="(row,i) in data.data" :key="i">
                             <td>@{{ row.did }}</td>
                             <td>@{{ row.dns }}</td>
+                            <td>@{{ row.dns_config ? row.dns_config.name : '' }}</td>
                             <td>@{{ row.domain_id }}</td>
                             <td>@{{ row.domain }}</td>
                             <td v-html="getDomainGroups(row.groups)"></td>
@@ -62,13 +64,13 @@
                         <form id="form-add">
                             <input type="hidden" name="action" value="add">
                             <div class="form-group row">
-                                <label for="staticEmail" class="col-sm-3 col-form-label">解析平台</label>
+                                <label for="staticEmail" class="col-sm-3 col-form-label">解析平台配置</label>
                                 <div class="col-sm-9">
                                     <div class="input-group">
-                                        <select name="dns" class="form-control" v-model="dns">
-                                            <option value="0">请选择域名解析平台</option>
-                                            @foreach(\App\Models\DnsConfig::all() as $dns)
-                                                <option value="{{ $dns->dns }}">{{ $dns->dns }}</option>
+                                        <select name="dns_config_id" class="form-control" v-model="dns_config_id">
+                                            <option value="0">请选择域名解析平台配置</option>
+                                            @foreach(\App\Models\DnsConfig::all() as $config)
+                                                <option value="{{ $config->id }}">{{ $config->name }} ({{ $config->dns }})</option>
                                             @endforeach
                                         </select>
                                         <div class="input-group-append" @click="getDomainList">
@@ -204,8 +206,8 @@
                 },
                 data: {},
                 storeInfo: {},
-                dns: 0,
-                domainList: []
+                domainList: [],
+                dns_config_id: 0
             },
             methods: {
                 getDomainGroups: function (groups) {
@@ -223,18 +225,17 @@
                 },
                 getDomainList: function () {
                     var vm = this;
-                    if (!this.dns) {
-                        vm.$message('请选择域名解析平台', 'error');
-                        return;
-                    }
-                    this.$post("/admin/domain", {action: 'domainList', dns: this.dns})
+                    this.$post("/admin/domain", {}, {
+                        action: 'domainList',
+                        dns_config_id: vm.dns_config_id
+                    })
                         .then(function (data) {
                             if (data.status === 0) {
-                                vm.domainList = data.data
+                                vm.domainList = data.data;
                             } else {
                                 vm.$message(data.message, 'error');
                             }
-                        })
+                        });
                 },
                 getList: function (page) {
                     var vm = this;
