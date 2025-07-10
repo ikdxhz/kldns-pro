@@ -19,7 +19,33 @@ class Config extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('database.connections.mysql.prefix', 'kldns_') . 'configs';
+        // 修复: 防止表前缀重复添加
+        $prefix = config('database.connections.mysql.prefix', 'kldns_');
+        $this->table = $prefix . 'configs';
+        
+        // 兼容处理: 检查并修复可能错误创建的表
+        $this->fixTablePrefix();
+    }
+    
+    /**
+     * 检查并修复可能错误创建的表名前缀重复问题
+     */
+    protected function fixTablePrefix()
+    {
+        try {
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            $wrongTable = $prefix . $prefix . 'configs';
+            $correctTable = $prefix . 'configs';
+            
+            // 检查是否存在错误表名
+            if (\Schema::hasTable($wrongTable) && !\Schema::hasTable($correctTable)) {
+                // 重命名表
+                \DB::statement("RENAME TABLE `{$wrongTable}` TO `{$correctTable}`");
+                \Log::info("Fixed table name: renamed {$wrongTable} to {$correctTable}");
+            }
+        } catch (\Exception $e) {
+            \Log::error("Failed to fix table prefix: " . $e->getMessage());
+        }
     }
     
     // 获取系统当前版本
