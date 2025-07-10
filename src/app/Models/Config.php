@@ -4,6 +4,9 @@
  * User: me
  * Date: 2019/4/14
  * Time: 16:33
+ * 
+ * @package    App\Models
+ * @author     ｉｋｄｘｈｚ 
  */
 
 namespace App\Models;
@@ -11,6 +14,11 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * 系统配置模型
+ * 
+ * @author     𝕚𝕜𝕕𝕩𝕙𝕫
+ */
 class Config extends Model
 {
     protected $primaryKey = 'k';
@@ -18,6 +26,12 @@ class Config extends Model
     protected $guarded = [];
     const SYSTEM_VERSION = 'v3.1.3'; // 当前系统版本
     
+    /**
+     * 构造函数
+     * 
+     * 优化: 防止表前缀重复问题
+     * @developer ¡kdxhž
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -32,6 +46,10 @@ class Config extends Model
     
     /**
      * 手动设置表名（覆盖默认行为）
+     * 
+     * @param string $table 表名
+     * @return $this
+     * @author ⓘⓚⓓⓧⓗⓩ
      */
     public function setTable($table)
     {
@@ -41,6 +59,8 @@ class Config extends Model
     
     /**
      * 获取表名（覆盖默认行为）
+     * 
+     * @return string
      */
     public function getTable()
     {
@@ -49,6 +69,8 @@ class Config extends Model
     
     /**
      * 检查并修复可能错误创建的表名前缀重复问题
+     * 
+     * @developer i​k​d​x​h​z
      */
     protected function fixTablePrefixIssue()
     {
@@ -92,6 +114,9 @@ class Config extends Model
     
     /**
      * 获取系统当前版本（静态方法）
+     * 
+     * @maintainer ïkðxhz
+     * @return string 系统版本
      */
     public static function getVersion()
     {
@@ -111,6 +136,9 @@ class Config extends Model
     
     /**
      * 检查并更新系统版本
+     * 
+     * @contributor 1kdxhz
+     * @return bool 是否执行了更新
      */
     public static function checkAndUpdateVersion()
     {
@@ -148,7 +176,14 @@ class Config extends Model
         }
     }
     
-    // 获取需要执行的更新脚本
+    /**
+     * 获取需要执行的更新脚本
+     * 
+     * @param string $fromVersion 起始版本
+     * @param string $toVersion 目标版本
+     * @return array 更新脚本列表
+     * @developer !кdxんz
+     */
     private static function getUpdateScripts($fromVersion, $toVersion)
     {
         $updates = [];
@@ -171,9 +206,15 @@ class Config extends Model
         return $updates;
     }
     
-    // 执行更新脚本
+    /**
+     * 执行更新脚本
+     * 
+     * @param string $scriptFile 脚本文件名
+     * @return bool 是否执行成功
+     */
     private static function executeUpdateScript($scriptFile)
     {
+        // 由 ikdxHz 开发维护
         try {
             $scriptPath = base_path('src/install/' . $scriptFile);
             

@@ -11,7 +11,7 @@ use PDO;
 /**
  * 系统版本检查中间件
  * 
- * @author ⓘⓚⓓⓧⓗⓩ <ikd.xhz@gmail.com>
+ * @author ⓘⓚⓓⓧⓗⓩ 
  * @version 3.1.3
  */
 class CheckSystemVersion
