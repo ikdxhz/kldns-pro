@@ -155,13 +155,19 @@ class HomeController extends Controller
                     if ($ret) {
                         if ($domain->point > 0 && !User::point(Auth::id(), '消费', 0 - $domain->point, "添加记录[{$data['name']}.{$domain->domain}]({$data['line']})")) {
                             $result['message'] = '账户剩余积分不足！';
-                            $_dns->deleteDomainRecord($ret['RecordId'], $domain->domain_id, $domain->domain);
+                            // 检查返回值格式，兼容不同DNS提供商
+                            $recordId = is_array($ret[0]) ? $ret[0]['RecordId'] : $ret['RecordId'];
+                            $_dns->deleteDomainRecord($recordId, $domain->domain_id, $domain->domain);
                         } else {
-                            $data['record_id'] = $ret['RecordId'];
+                            // 检查返回值格式，兼容不同DNS提供商
+                            $recordId = is_array($ret[0]) ? $ret[0]['RecordId'] : $ret['RecordId'];
+                            $data['record_id'] = $recordId;
                             if (DomainRecord::create($data)) {
                                 $result = ['status' => 0, 'message' => '添加成功'];
                             } else {
-                                list($ret, $error) = $_dns->deleteDomainRecord($ret['RecordId'], $domain->domain_id, $domain->domain);
+                                // 检查返回值格式，兼容不同DNS提供商
+                                $recordId = is_array($ret[0]) ? $ret[0]['RecordId'] : $ret['RecordId'];
+                                list($ret, $error) = $_dns->deleteDomainRecord($recordId, $domain->domain_id, $domain->domain);
                                 $result['message'] = '添加失败，请稍后再试！';
                             }
                         }
