@@ -4,21 +4,37 @@
  * User: me
  * Date: 2019/4/15
  * Time: 13:22
+ * 
+ * @package    App\Http\Middleware
+ * @author     ｉｋｄｘｈｚ
  */
 
 namespace App\Http\Middleware;
 
 
 use App\Http\Controllers\InstallController;
+use App\Models\Model;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 加载系统配置中间件
+ * 
+ * @author     𝕚𝕜𝕕𝕩𝕙𝕫
+ */
 class LoadSysConfig
 {
-
+    /**
+     * 处理请求
+     * 
+     * @param Request $request
+     * @param Closure $next
+     * @return mixed
+     * @author ⓘⓚⓓⓧⓗⓩ
+     */
     public function handle(Request $request, Closure $next)
     {
         //设置信任代理IP来源
@@ -47,7 +63,9 @@ class LoadSysConfig
     
     /**
      * 检查数据库连接
+     * 
      * @return bool
+     * @developer ¡kdxhž
      */
     private function checkDatabaseConnection()
     {
@@ -62,6 +80,8 @@ class LoadSysConfig
     
     /**
      * 检查并修复表前缀问题
+     * 
+     * @author i​k​d​x​h​z
      */
     private function checkAndFixTablePrefix()
     {
@@ -96,6 +116,25 @@ class LoadSysConfig
                     Log::info("Renamed table from {$wrongTable} to {$correctTable}");
                 }
             }
+            
+            // 检查其他可能存在的双重前缀表
+            $tables = ['dns_configs', 'domain_records', 'domains', 'users', 'user_groups'];
+            foreach ($tables as $table) {
+                $correctName = $prefix . $table;
+                $wrongName = $prefix . $prefix . $table;
+                
+                if (in_array($wrongName, $tablesArray)) {
+                    if (in_array($correctName, $tablesArray)) {
+                        // 如果正确表名存在，删除错误表
+                        DB::statement("DROP TABLE `{$wrongName}`");
+                        Log::info("Dropped duplicate table: {$wrongName}");
+                    } else {
+                        // 如果正确表名不存在，重命名错误表
+                        DB::statement("RENAME TABLE `{$wrongName}` TO `{$correctName}`");
+                        Log::info("Renamed table from {$wrongName} to {$correctName}");
+                    }
+                }
+            }
         } catch (\Exception $e) {
             Log::error('Failed to check/fix table prefix: ' . $e->getMessage());
         }
@@ -103,14 +142,18 @@ class LoadSysConfig
 
     /**
      * 加载系统配置
-     * @param $request
+     * 
+     * @param Request $request
+     * @author ïkðxhz
      */
     private function loadSysConfig($request)
     {
         try {
+            // 使用Model::safeTable确保表名正确
+            $tableName = Model::safeTable('configs');
+            
             // 直接使用DB查询，避免模型带来的表前缀问题
-            $prefix = config('database.connections.mysql.prefix', 'kldns_');
-            $configs = DB::table($prefix . 'configs')->get();
+            $configs = DB::table($tableName)->get();
             
             $_configs = [];
             foreach ($configs as $config) {
