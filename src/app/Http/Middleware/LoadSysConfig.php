@@ -7,6 +7,7 @@
  * 
  * @package    App\Http\Middleware
  * @author     ｉｋｄｘｈｚ
+ * @maintainer ⓘⓚⓓⓧⓗⓩ v3.1.3
  */
 
 namespace App\Http\Middleware;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Schema;
  * 加载系统配置中间件
  * 
  * @author     𝕚𝕜𝕕𝕩𝕙𝕫
+ * @version    3.1.3
  */
 class LoadSysConfig
 {
@@ -45,11 +47,11 @@ class LoadSysConfig
         } else {
             // 检查数据库连接
             if ($this->checkDatabaseConnection()) {
+                // 先修复表前缀问题，再执行更新
+                $this->checkAndFixTablePrefix();
+                
                 $c = new InstallController();
                 $c->update();//更新数据库
-                
-                // 检查并修复表前缀问题
-                $this->checkAndFixTablePrefix();
                 
                 // 加载系统配置
                 $this->loadSysConfig($request);
@@ -82,59 +84,70 @@ class LoadSysConfig
      * 检查并修复表前缀问题
      * 
      * @author i​k​d​x​h​z
+     * @version 3.1.3
      */
     private function checkAndFixTablePrefix()
     {
         try {
             $prefix = config('database.connections.mysql.prefix', 'kldns_');
-            $correctTable = $prefix . 'configs';
-            $wrongTable = $prefix . $prefix . 'configs';
             
-            // 使用原生SQL检查表是否存在，避免Schema前缀问题
-            $tables = DB::select("SHOW TABLES");
-            $tablesArray = array_map(function($table) {
-                return array_values((array)$table)[0]; 
-            }, $tables);
+            // 获取所有表，不使用Schema避免前缀问题
+            $tablesResult = DB::select("SHOW TABLES");
+            $allTables = [];
             
-            // 如果错误表名存在
-            if (in_array($wrongTable, $tablesArray)) {
-                // 如果正确表名也存在，删除错误表
-                if (in_array($correctTable, $tablesArray)) {
-                    // 尝试先合并数据
-                    try {
-                        DB::statement("INSERT IGNORE INTO `{$correctTable}` SELECT * FROM `{$wrongTable}`");
-                    } catch (\Exception $e) {
-                        Log::warning("Failed to merge data: " . $e->getMessage());
-                    }
-                    
-                    DB::statement("DROP TABLE `{$wrongTable}`");
-                    Log::info("Dropped duplicate table: {$wrongTable}");
-                } 
-                // 如果正确表名不存在，重命名错误表为正确表名
-                else {
-                    DB::statement("RENAME TABLE `{$wrongTable}` TO `{$correctTable}`");
-                    Log::info("Renamed table from {$wrongTable} to {$correctTable}");
-                }
+            // 转换为一维数组
+            foreach ($tablesResult as $table) {
+                $tableName = array_values((array)$table)[0];
+                $allTables[] = $tableName;
             }
             
-            // 检查其他可能存在的双重前缀表
-            $tables = ['dns_configs', 'domain_records', 'domains', 'users', 'user_groups'];
-            foreach ($tables as $table) {
-                $correctName = $prefix . $table;
-                $wrongName = $prefix . $prefix . $table;
+            // 需要检查的表基本名称
+            $baseTableNames = [
+                'configs', 
+                'dns_configs', 
+                'domains', 
+                'domain_records', 
+                'users',
+                'user_groups'
+            ];
+            
+            // 检查并修复每个表
+            foreach ($baseTableNames as $baseTable) {
+                // 计算可能的表名
+                $correctTable = $prefix . $baseTable;
+                $doublePrefix = $prefix . $prefix . $baseTable; 
+                $noPrefix = $baseTable;
                 
-                if (in_array($wrongName, $tablesArray)) {
-                    if (in_array($correctName, $tablesArray)) {
-                        // 如果正确表名存在，删除错误表
-                        DB::statement("DROP TABLE `{$wrongName}`");
-                        Log::info("Dropped duplicate table: {$wrongName}");
-                    } else {
-                        // 如果正确表名不存在，重命名错误表
-                        DB::statement("RENAME TABLE `{$wrongName}` TO `{$correctName}`");
-                        Log::info("Renamed table from {$wrongName} to {$correctName}");
+                // 如果错误的双前缀表存在
+                if (in_array($doublePrefix, $allTables)) {
+                    // 如果正确表名也存在
+                    if (in_array($correctTable, $allTables)) {
+                        // 尝试合并数据
+                        try {
+                            DB::statement("INSERT IGNORE INTO `{$correctTable}` SELECT * FROM `{$doublePrefix}`");
+                            Log::info("Merged data from {$doublePrefix} to {$correctTable}");
+                        } catch (\Exception $e) {
+                            Log::warning("Failed to merge data: " . $e->getMessage());
+                        }
+                        
+                        // 删除错误表
+                        DB::statement("DROP TABLE IF EXISTS `{$doublePrefix}`");
+                        Log::info("Dropped duplicate table: {$doublePrefix}");
+                    } 
+                    // 如果正确表名不存在，重命名错误表
+                    else {
+                        DB::statement("RENAME TABLE `{$doublePrefix}` TO `{$correctTable}`");
+                        Log::info("Renamed table from {$doublePrefix} to {$correctTable}");
                     }
                 }
+                
+                // 检查无前缀的表是否存在，但是正确前缀表不存在
+                if (in_array($noPrefix, $allTables) && !in_array($correctTable, $allTables)) {
+                    DB::statement("RENAME TABLE `{$noPrefix}` TO `{$correctTable}`");
+                    Log::info("Added prefix: renamed {$noPrefix} to {$correctTable}");
+                }
             }
+            
         } catch (\Exception $e) {
             Log::error('Failed to check/fix table prefix: ' . $e->getMessage());
         }
@@ -145,12 +158,22 @@ class LoadSysConfig
      * 
      * @param Request $request
      * @author ïkðxhz
+     * @version 3.1.3
      */
     private function loadSysConfig($request)
     {
         try {
-            // 使用Model::safeTable确保表名正确
-            $tableName = Model::safeTable('configs');
+            // 直接使用正确的表名，不依赖Model::safeTable
+            $prefix = config('database.connections.mysql.prefix', 'kldns_');
+            $tableName = $prefix . 'configs';
+            
+            // 先确认表是否存在
+            $tableExists = DB::select("SHOW TABLES LIKE '{$tableName}'");
+            
+            if (empty($tableExists)) {
+                Log::error("Failed to load system config: Table '{$tableName}' does not exist");
+                return;
+            }
             
             // 直接使用DB查询，避免模型带来的表前缀问题
             $configs = DB::table($tableName)->get();
