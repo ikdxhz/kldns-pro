@@ -121,8 +121,8 @@ class Config extends Model
     public static function getVersion()
     {
         try {
-            $prefix = config('database.connections.mysql.prefix', 'kldns_');
-            $tableName = $prefix . 'configs';
+            // 使用safeTable方法确保表名正确
+            $tableName = self::safeTable('configs');
             
             // 直接使用DB查询而不是模型，以避免前缀问题
             $version = DB::table($tableName)->where('k', 'system_version')->first();
@@ -148,12 +148,13 @@ class Config extends Model
             // 如果当前版本低于系统版本，执行更新
             if (version_compare($currentVersion, self::SYSTEM_VERSION, '<')) {
                 $updates = self::getUpdateScripts($currentVersion, self::SYSTEM_VERSION);
-                $prefix = config('database.connections.mysql.prefix', 'kldns_');
+                // 使用safeTable方法确保表名正确
+                $tableName = self::safeTable('configs');
                 
                 foreach ($updates as $version => $script) {
                     if (self::executeUpdateScript($script)) {
                         // 更新系统版本记录
-                        DB::table($prefix . 'configs')->updateOrInsert(
+                        DB::table($tableName)->updateOrInsert(
                             ['k' => 'system_version'],
                             ['v' => $version]
                         );
@@ -161,7 +162,7 @@ class Config extends Model
                 }
                 
                 // 最后更新到当前版本
-                DB::table($prefix . 'configs')->updateOrInsert(
+                DB::table($tableName)->updateOrInsert(
                     ['k' => 'system_version'],
                     ['v' => self::SYSTEM_VERSION]
                 );
