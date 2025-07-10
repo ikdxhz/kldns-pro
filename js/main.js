@@ -37,24 +37,39 @@ window.$post = function (url, params1, params2, func) {
             } else {
                 console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
             }
-            load = layer.load({
-                type: 2, shadeClose: false
-            });
-        },
-        error: function (request) {
-            if (request.status === 419) {
-                layer.alert('页面已过期，请刷新页面！', {
-                    closeBtn: 0
-                }, function (i) {
-                    window.location.reload();
+            // 确保layer已定义
+            if (typeof layer !== 'undefined') {
+                load = layer.load({
+                    type: 2, shadeClose: false
                 });
             } else {
-                layer.close(load);
-                layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
+                console.warn('Layer.js not loaded yet');
+            }
+        },
+        error: function (request) {
+            // 确保layer已定义
+            if (typeof layer !== 'undefined') {
+                if (load) layer.close(load);
+                
+                if (request.status === 419) {
+                    layer.alert('页面已过期，请刷新页面！', {
+                        closeBtn: 0
+                    }, function (i) {
+                        window.location.reload();
+                    });
+                } else {
+                    layer.alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
+                }
+            } else {
+                console.error('请求错误:', request.status, request.statusText);
+                alert('网络出错了，请稍后再试！' + request.status + ' ' + request.statusText);
             }
         },
         success: function (ret) {
-            layer.close(load);
+            // 确保layer已定义
+            if (typeof layer !== 'undefined' && load) {
+                layer.close(load);
+            }
         }
     });
 };
@@ -64,14 +79,19 @@ Vue.prototype.$post = window.$post;
 
 // 1kd+xhz - 全局消息提示
 Vue.prototype.$message = function (message, type) {
-    if (type === 'success') {
-        layer.msg(message, {icon: 1, time: 2000});
-    } else if (type === 'error') {
-        layer.msg(message, {icon: 2, time: 3000});
-    } else if (type === 'warning') {
-        layer.msg(message, {icon: 0, time: 2500});
+    if (typeof layer !== 'undefined') {
+        if (type === 'success') {
+            layer.msg(message, {icon: 1, time: 2000});
+        } else if (type === 'error') {
+            layer.msg(message, {icon: 2, time: 3000});
+        } else if (type === 'warning') {
+            layer.msg(message, {icon: 0, time: 2500});
+        } else {
+            layer.alert(message);
+        }
     } else {
-        layer.alert(message);
+        // 回退到原生alert
+        alert(message);
     }
 };
 
