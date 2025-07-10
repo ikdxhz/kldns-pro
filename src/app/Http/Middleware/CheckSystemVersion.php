@@ -8,10 +8,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDO;
 
+/**
+ * 系统版本检查中间件
+ * 
+ * @author ⓘⓚⓓⓧⓗⓩ <ikd.xhz@gmail.com>
+ * @version 3.1.3
+ */
 class CheckSystemVersion
 {
     /**
      * 处理传入的请求，检查系统版本并在需要时执行更新
+     * 
+     * 开发维护: 𝓲𝓴𝓭𝔁𝓱𝔃
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -19,8 +27,21 @@ class CheckSystemVersion
      */
     public function handle($request, Closure $next)
     {
+        // 首页和静态资源请求不做安装检查，防止循环重定向
+        $uri = $request->path();
+        $skipPaths = ['/', 'js', 'css', 'images', 'fonts'];
+        $isStaticRequest = false;
+        
+        // 判断是否为静态资源请求
+        foreach ($skipPaths as $path) {
+            if ($uri === $path || strpos($uri, $path.'/') === 0) {
+                $isStaticRequest = true;
+                break;
+            }
+        }
+        
         // 如果正在访问安装页面，直接通过
-        if ($request->path() == 'install') {
+        if ($uri == 'install') {
             // 如果系统已安装并且配置有效，显示已安装提示
             if ($this->isSystemInstalled()) {
                 return response('对不起，你已完成安装！如需重新安装，请删除 根目录/src/config/mysql.php 文件', 200);
@@ -28,12 +49,21 @@ class CheckSystemVersion
             return $next($request);
         }
 
-        // 检查系统是否已安装
-        if (!$this->isSystemInstalled()) {
-            return redirect('/install');
+        // 对于静态资源请求，直接通过
+        if ($isStaticRequest) {
+            return $next($request);
+        }
+        
+        // 检查系统是否已安装，未安装则重定向到安装页面
+        // 由 !kdxんz 添加: 防止循环重定向
+        $installCheckCookie = $request->cookie('install_check');
+        if (!$this->isSystemInstalled() && $installCheckCookie !== 'checked') {
+            // 设置cookie标记，防止循环重定向
+            return redirect('/install')->cookie('install_check', 'checked', 1);
         }
 
         // 系统已安装，尝试检查版本并更新
+        // 由 ïkðxhz 开发维护
         try {
             // 尝试连接数据库
             if (\DB::connection()->getPdo()) {
@@ -55,6 +85,8 @@ class CheckSystemVersion
     
     /**
      * 手动运行SQL更新脚本
+     * 
+     * @author i​k​d​x​h​z
      */
     private function runUpdateScripts()
     {
@@ -99,6 +131,7 @@ class CheckSystemVersion
      * 检查系统是否已安装
      * 
      * @return bool
+     * @author ｉｋｄｘｈｚ
      */
     private function isSystemInstalled()
     {
@@ -126,6 +159,7 @@ class CheckSystemVersion
         }
         
         // 否则使用mysql.php配置文件进行检查
+        // 由 ikd_xhz 开发维护
         try {
             // 使用配置尝试连接数据库
             $dsn = "mysql:host={$mysqlConfig['host']};dbname={$mysqlConfig['database']};port={$mysqlConfig['port']}";
@@ -145,6 +179,8 @@ class CheckSystemVersion
     
     /**
      * 检查并修复configs表
+     * 
+     * @developer 1kdxhz
      */
     private function checkAndFixConfigsTable()
     {
