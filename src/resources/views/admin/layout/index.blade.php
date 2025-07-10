@@ -1,14 +1,21 @@
 <!doctype html>
-<html>
+<!-- 
+  Created by: ⁱᵏᵈˣʰᶻ
+  Version: 1.0.1
+-->
+<html lang="zh-CN">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="管理后台 - {{ config('app.name') }}">
+    <meta name="author" content="ik​d​x​h​z">
+    <link rel="icon" href="/favicon.ico">
     <title>@yield('title') - 管理后台 - {{ config('app.name') }}</title>
     <meta name="keywords" content="{{ config('app.name') }}"/>
     <meta name="description" content="{{ config('app.name') }}"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
     @yield('head')
 </head>
@@ -22,20 +29,31 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link nav-logo-name d-none d-sm-block" href="/"><i class="fa fa-cloud"></i> 快乐二级域名分发系统
-                    V{{ config('version') }}</a>
-                <a class="nav-link nav-logo-name d-sm-none" href="/"><i class="fa fa-cloud"></i> 域名分发</a>
+                <a class="nav-link nav-logo-name d-none d-sm-block" href="/">
+                    <i class="fa fa-cloud mr-2"></i> 快乐二级域名分发系统 V{{ config('version') }}
+                </a>
+                <a class="nav-link nav-logo-name d-sm-none" href="/">
+                    <i class="fa fa-cloud mr-1"></i> 域名分发
+                </a>
             </li>
         </ul>
     </div>
 
     <ul class="navbar-nav flex-row ml-auto d-md-flex">
         <li class="nav-item dropdown">
-            <a class="nav-item nav-link dropdown-toggle" href="#" id="user_btns"
-               data-toggle="dropdown">{{ auth('admin')->user()->username }}</a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="user_btns">
-                <a class="dropdown-item" href="/admin/profile">修改密码</a>
-                <a class="dropdown-item" href="/admin/logout" onclick="return confirm('确认退出登录？');">退出登录</a>
+            <a class="nav-item nav-link dropdown-toggle" href="#" id="user_btns" data-toggle="dropdown">
+                <i class="fa fa-user-shield mr-1"></i>{{ auth('admin')->user()->username }}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right shadow-sm" aria-labelledby="user_btns">
+                <!-- ïkðxhz -->
+                <div class="dropdown-header small text-muted">管理员操作</div>
+                <a class="dropdown-item" href="/admin/profile">
+                    <i class="fa fa-key fa-fw mr-1"></i>修改密码
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/admin/logout" onclick="return confirm('确认退出登录？');">
+                    <i class="fa fa-sign-out-alt fa-fw mr-1"></i>退出登录
+                </a>
             </div>
         </li>
     </ul>
@@ -115,21 +133,27 @@
                     </li>
                 </ul>
             </div>
+            <div class="p-3 d-none d-md-block">
+                <div class="text-center small text-muted mt-4">
+                    <p>© {{ date('Y') }} {{ config('app.name') }}</p>
+                    <p class="mb-0">由<span class="font-weight-bold">1kdxhz</span>团队开发</p>
+                </div>
+            </div>
         </div>
         <main class="col-12 col-md-9 col-xl-10 py-md-3 pl-md-5 bd-content">
             @yield('content')
         </main>
     </div>
 </div>
-</body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.3/layer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layer@3.5.1/dist/layer.js"></script>
 <script src="/js/main.js"></script>
 <script>
+    // by ikdxHz
     var showMenu = false;
-    $(document).ready(function () {
+    $(document).ready(function() {
         $("#menu").click(function () {
             if (showMenu) {
                 $(".bd-sidebar").removeClass('openMenu');
@@ -143,6 +167,7 @@
                 showMenu = true;
             }
         });
+        
         /*菜单栏*/
         $(".bd-sidebar a").each(function () {
             var pathname = window.location.pathname;
@@ -151,9 +176,8 @@
                 $(this).parent().addClass('active');
                 $(this).parent().parent().addClass('show');
             }
-        })
+        });
     });
-
 </script>
 @yield('foot')
 </html>
