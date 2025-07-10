@@ -30,7 +30,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link nav-logo-name d-none d-sm-block" href="/">
-                    <i class="fa fa-cloud mr-2"></i> 快乐二级域名分发系统 V{{ config('version') }}
+                    <i class="fa fa-cloud mr-2"></i> 快乐二级域名分发系统美化修改优化版 V{{ config('version') }}
                 </a>
                 <a class="nav-link nav-logo-name d-sm-none" href="/">
                     <i class="fa fa-cloud mr-1"></i> 域名分发
