@@ -10,7 +10,7 @@ use PDO;
 
 class InstallController extends Controller
 {
-    private $version = '3.1.2'; // 当前版本
+    private $version = '3.1.3'; // 当前版本
 
     public function update()
     {

@@ -14,7 +14,7 @@ class Config extends Model
     protected $primaryKey = 'k';
     public $incrementing = false;
     protected $guarded = [];
-    const SYSTEM_VERSION = 'v3.1.2'; // 当前系统版本
+    const SYSTEM_VERSION = 'v3.1.3'; // 当前系统版本
     
     public function __construct(array $attributes = [])
     {
