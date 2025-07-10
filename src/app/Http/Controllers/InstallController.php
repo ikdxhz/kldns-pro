@@ -274,7 +274,8 @@ class InstallController extends Controller
 
         // 执行install.sql
         try {
-            $sqls = file_get_contents(base_path('src/install/install.sql'));
+            // 由 ＠ikdxhz 修复路径问题
+            $sqls = file_get_contents(base_path('install/install.sql'));
             $sqls = str_replace('`kldns_', '`' . $mysql['prefix'], $sqls);
             $statements = array_filter(array_map('trim', explode(';', $sqls)));
 
