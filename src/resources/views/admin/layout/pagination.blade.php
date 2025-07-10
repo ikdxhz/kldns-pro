@@ -1,6 +1,6 @@
 <!-- 
-  设计者: 𝓲𝓴𝓭𝔁𝓱𝔃
-  Version: 1.0.1
+  修改者: 𝓲𝓴𝓭𝔁𝓱𝔃
+  Version: 1.0.2
 -->
 <nav v-cloak="" aria-label="分页导航" class="mb-3">
     <ul class="pagination justify-content-center" v-if="data.last_page>1">
