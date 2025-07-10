@@ -11,9 +11,8 @@ namespace App\Models;
 
 class DnsConfig extends Model
 {
-    protected $primaryKey = 'dns';
-    public $incrementing = false;
-    protected $guarded = [];
+    protected $primaryKey = 'id';
+    protected $guarded = ['id'];
 
     public function getConfigAttribute()
     {
