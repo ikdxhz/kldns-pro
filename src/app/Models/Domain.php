@@ -28,6 +28,11 @@ class Domain extends Model
 
     public function dnsConfig()
     {
+        // 优先通过dns_config_id关联
+        if (!empty($this->dns_config_id)) {
+            return $this->belongsTo(DnsConfig::class, 'dns_config_id', 'id');
+        }
+        // 兼容旧数据，通过dns字段关联
         return $this->belongsTo(DnsConfig::class, 'dns', 'dns');
     }
 }
