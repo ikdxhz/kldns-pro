@@ -8,7 +8,7 @@ use PDO;
 
 class InstallController extends Controller
 {
-    private $version = '3.1.0';
+    private $version = '3.1.2'; // 更新为当前版本
 
     public function update()
     {
@@ -128,6 +128,11 @@ class InstallController extends Controller
                         }
                     }
                 }
+                
+                // 将系统版本添加到配置表
+                $tableName = $mysql['prefix'] . 'configs';
+                $db->exec("INSERT INTO `{$tableName}` (`k`, `v`) VALUES ('system_version', '{$this->version}') ON DUPLICATE KEY UPDATE `v` = '{$this->version}'");
+                
                 $result = ['status' => 0, 'message' => '安装完成', 'data' => [
                     'success' => $success,
                     'error' => $error,
