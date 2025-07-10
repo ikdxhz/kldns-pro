@@ -142,12 +142,34 @@ body {
     font-weight: 600;
 }
 
+/* 修改这里，确保只有没有背景色类的卡片才设置白色背景 */
 .card:not([class*='bg-']) .card-body {
     background: white;
 }
 
-/* 确保彩色背景卡片中的文字颜色为白色并增加阴影 */
-.card.bg-primary, .card.bg-success, .card.bg-warning, .card.bg-danger, .card.bg-info {
+/* 确保彩色背景卡片的背景色和文字颜色正确显示 */
+.card.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.card.bg-success {
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+}
+
+.card.bg-warning {
+    background-color: var(--warning-color) !important;
+    color: white !important;
+}
+
+.card.bg-danger {
+    background-color: var(--danger-color) !important;
+    color: white !important;
+}
+
+.card.bg-info {
+    background-color: var(--info-color) !important;
     color: white !important;
 }
 
